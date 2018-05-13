@@ -46,7 +46,7 @@ object CommonValidation {
           Left(
             GenericError(
               "Attempt to transfer unavailable funds: Transaction application leads to " +
-                s"negative waves balance to (at least) temporary negative state, current balance equals $oldWavesBalance, " +
+                s"negative Agate balance to (at least) temporary negative state, current balance equals $oldWavesBalance, " +
                 s"spends equals ${spendings.balance}, result is $newWavesBalance"))
         } else if (spendings.assets.nonEmpty) {
           val oldAssetBalances = blockchain.portfolio(sender).assets
@@ -175,7 +175,7 @@ object CommonValidation {
             restFeeAmount >= 0,
             (),
             GenericError(
-              s"Fee in ${feeAssetId.fold("WAVES")(_.toString)} for ${tx.builder.classTag} does not exceed minimal value of $minimumFee WAVES: $feeAmount")
+              s"Fee in ${feeAssetId.fold("Agate")(_.toString)} for ${tx.builder.classTag} does not exceed minimal value of $minimumFee Agate: $feeAmount")
           )
         } yield (None, restFeeAmount)
       }
@@ -186,7 +186,7 @@ object CommonValidation {
       if (isSmartToken) {
         val (feeAssetId, feeAmount) = inputFee
         for {
-          _ <- Either.cond(feeAssetId.isEmpty, (), GenericError("Transactions with smart tokens require Waves as fee"))
+          _ <- Either.cond(feeAssetId.isEmpty, (), GenericError("Transactions with smart tokens require Agate as fee"))
           restFeeAmount = feeAmount - ScriptExtraFee
           _ <- Either.cond(
             restFeeAmount >= 0,
@@ -205,7 +205,7 @@ object CommonValidation {
       if (hasSmartAccountScript) {
         val (feeAssetId, feeAmount) = inputFee
         for {
-          _ <- Either.cond(feeAssetId.isEmpty, (), GenericError("Transactions from scripted accounts require Waves as fee"))
+          _ <- Either.cond(feeAssetId.isEmpty, (), GenericError("Transactions from scripted accounts require Agate as fee"))
           restFeeAmount = feeAmount - ScriptExtraFee
           _ <- Either.cond(
             restFeeAmount >= 0,

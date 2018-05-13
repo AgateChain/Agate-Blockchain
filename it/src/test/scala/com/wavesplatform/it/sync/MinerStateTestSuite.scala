@@ -14,8 +14,8 @@ class MinerStateTestSuite extends FunSuite with CancelAfterFailure with NodesFro
 
   override protected def nodeConfigs: Seq[Config] = Configs
 
-  private val transferFee    = 0.001.waves
-  private val transferAmount = 1000.waves
+  private val transferFee    = 0.001.Agate
+  private val transferAmount = 1000.Agate
 
   private def miner               = nodes.head
   private def nodeWithZeroBalance = nodes.last
@@ -43,7 +43,7 @@ object MinerStateTestSuite {
   import com.wavesplatform.it.NodeConfigs._
   val microblockActivationHeight = 0
   private val minerConfig        = ConfigFactory.parseString(s"""
-    |waves {
+    |Agate {
     |  synchronization.synchronization-timeout = 10s
     |  blockchain.custom.functionality {
     |    pre-activated-features.1 = 0
@@ -53,7 +53,7 @@ object MinerStateTestSuite {
     |}""".stripMargin)
 
   private val notMinerConfig = ConfigFactory.parseString(s"""
-    |waves {
+    |Agate {
     |  synchronization.synchronization-timeout = 10s
     |  blockchain.custom.functionality {
     |    pre-activated-features.1 = 0

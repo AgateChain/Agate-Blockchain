@@ -10,7 +10,7 @@ class IssueTransactionV1Suite extends BaseTransactionSuite with TableDrivenPrope
   private val defaultQuantity = 100000
   private val assetFee        = 5.waves
 
-  test("asset issue changes issuer's asset balance; issuer's waves balance is decreased by fee") {
+  test("asset issue changes issuer's asset balance; issuer's Agate balance is decreased by fee") {
     val assetName        = "myasset"
     val assetDescription = "my asset description"
     val (balance1, eff1) = notMiner.accountBalances(firstAddress)
@@ -41,10 +41,10 @@ class IssueTransactionV1Suite extends BaseTransactionSuite with TableDrivenPrope
     val assetName        = "myasset"
     val assetDescription = "my asset description"
     val eff1             = notMiner.accountBalances(firstAddress)._2
-    val bigAssetFee      = eff1 + 1.waves
+    val bigAssetFee      = eff1 + 1.Agate
 
     assertBadRequestAndMessage(sender.issue(firstAddress, assetName, assetDescription, defaultQuantity, 2, reissuable = false, bigAssetFee),
-                               "negative waves balance")
+                               "negative Agate balance")
   }
 
   val invalidAssetValue =

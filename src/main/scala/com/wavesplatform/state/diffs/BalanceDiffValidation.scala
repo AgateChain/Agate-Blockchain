@@ -25,11 +25,11 @@ object BalanceDiffValidation extends ScorexLogging with Instrumented {
         val newPortfolio = oldPortfolio.combine(portfolioDiff)
 
         val err = if (newPortfolio.balance < 0) {
-          Some(s"negative waves balance: $acc, old: ${oldPortfolio.balance}, new: ${newPortfolio.balance}")
+          Some(s"negative Agate balance: $acc, old: ${oldPortfolio.balance}, new: ${newPortfolio.balance}")
         } else if (newPortfolio.assets.values.exists(_ < 0)) {
           Some(s"negative asset balance: $acc, new portfolio: ${negativeAssetsInfo(newPortfolio)}")
         } else if (newPortfolio.effectiveBalance < 0) {
-          Some(s"negative effective balance: $acc, old: ${leaseWavesInfo(oldPortfolio)}, new: ${leaseWavesInfo(newPortfolio)}")
+          Some(s"negative effective balance: $acc, old: ${leaseAgateInfo(oldPortfolio)}, new: ${leaseWavesInfo(newPortfolio)}")
         } else if (newPortfolio.balance < newPortfolio.lease.out && currentHeight > fs.allowLeasedBalanceTransferUntilHeight) {
           Some(s"leased being more than own: $acc, old: ${leaseWavesInfo(oldPortfolio)}, new: ${leaseWavesInfo(newPortfolio)}")
         } else None

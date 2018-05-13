@@ -26,14 +26,14 @@ class SmartContractsTestSuite extends BaseTransactionSuite with CancelAfterFailu
   private val acc2 = pkFromAddress(thirdAddress)
   private val acc3 = pkFromAddress(fourthAddress)
 
-  private val transferAmount: Long = 1.waves
-  private val fee: Long            = 0.001.waves
+  private val transferAmount: Long = 1.Agate
+  private val fee: Long            = 0.001.Agate
 
   test("step1: make leasing, setup smart contract and cancel leasing") {
     val txId = sender.transfer(sender.address, acc0.address, 10 * transferAmount, fee).id
     nodes.waitForHeightAriseAndTxPresent(txId)
 
-    val createdLeaseTxId = sender.lease(firstAddress, fourthAddress, transferAmount, fee + 0.2.waves).id
+    val createdLeaseTxId = sender.lease(firstAddress, fourthAddress, transferAmount, fee + 0.2.Agate).id
     nodes.waitForHeightAriseAndTxPresent(createdLeaseTxId)
 
     val scriptText = {
@@ -104,7 +104,7 @@ class SmartContractsTestSuite extends BaseTransactionSuite with CancelAfterFailu
           amount = transferAmount,
           timestamp = System.currentTimeMillis(),
           feeAssetId = None,
-          feeAmount = fee + 0.004.waves,
+          feeAmount = fee + 0.004.Agate,
           attachment = Array.emptyByteArray,
           proofs = Proofs.empty
         )
@@ -142,7 +142,7 @@ class SmartContractsTestSuite extends BaseTransactionSuite with CancelAfterFailu
         version = SetScriptTransaction.supportedVersions.head,
         sender = acc0,
         script = Some(newScript),
-        fee = fee + 0.004.waves,
+        fee = fee + 0.004.Agate,
         timestamp = System.currentTimeMillis(),
         proofs = Proofs.empty
       )

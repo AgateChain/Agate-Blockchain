@@ -29,7 +29,7 @@ class MicroblocksFeeTestSuite extends FreeSpec with Matchers with CancelAfterFai
           //Not mining node sends transfer transactions to another not mining node
           //Mining nodes collect fee
           (1 to n).map { _ =>
-            notMiner.transfer(notMiner.address, firstAddress, (1 + Random.nextInt(10)).waves, fee)
+            notMiner.transfer(notMiner.address, firstAddress, (1 + Random.nextInt(10)).Agate, fee)
           }
         }
         .map(_ => ())
@@ -48,7 +48,7 @@ class MicroblocksFeeTestSuite extends FreeSpec with Matchers with CancelAfterFai
       height <- traverse(nodes)(_.height).map(_.max)
 
       _ <- traverse(nodes)(_.waitForHeight(microblockActivationHeight - 1))
-      _ <- txRequestsGen(200, 2.waves)
+      _ <- txRequestsGen(200, 2.Agate)
       _ <- traverse(nodes)(_.waitForHeight(microblockActivationHeight + 2))
 
       initialBalances <- notMiner.debugStateAt(microblockActivationHeight - 1) //100%
@@ -82,7 +82,7 @@ class MicroblocksFeeTestSuite extends FreeSpec with Matchers with CancelAfterFai
 
   private val microblockActivationHeight = 10
   private val minerConfig = ConfigFactory.parseString(
-    s"""waves {
+    s"""Agate {
        |  blockchain.custom.functionality.pre-activated-features.2 = $microblockActivationHeight
        |  miner.quorum = 3
        |}
@@ -90,7 +90,7 @@ class MicroblocksFeeTestSuite extends FreeSpec with Matchers with CancelAfterFai
   )
 
   private val notMinerConfig = ConfigFactory.parseString(
-    s"""waves {
+    s"""Agate {
        |  blockchain.custom.functionality.pre-activated-features.2 = $microblockActivationHeight
        |  miner.enable = no
        |}

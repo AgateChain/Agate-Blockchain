@@ -19,7 +19,7 @@ class CustomFeeTransactionSuite extends BaseTransactionSuite with CancelAfterFai
   override protected def nodeConfigs: Seq[Config] = Configs
 
   private val transferFee = 100000
-  private val assetFee    = 1.waves
+  private val assetFee    = 1.Agate
   private val assetToken  = 100
 
   test("make transfer with sponsored asset") {
@@ -83,7 +83,7 @@ object CustomFeeTransactionSuite {
       quantity = defaultAssetQuantity,
       decimals = 2,
       reissuable = false,
-      fee = 1.waves,
+      fee = 1.Agate,
       timestamp = System.currentTimeMillis()
     )
     .right
@@ -92,14 +92,14 @@ object CustomFeeTransactionSuite {
   val assetId = assetTx.id()
 
   private val minerConfig = ConfigFactory.parseString(s"""
-      | waves.fees.transfer.$assetId = 100000
-      | waves.blockchain.custom.functionality {
+      | Agate.fees.transfer.$assetId = 100000
+      | Agate.blockchain.custom.functionality {
       |   feature-check-blocks-period = $featureCheckBlocksPeriod
       |   blocks-for-feature-activation = $featureCheckBlocksPeriod
       |   pre-activated-features = { 7 = 0 }
       |}""".stripMargin)
 
-  private val notMinerConfig = ConfigFactory.parseString("waves.miner.enable=no").withFallback(minerConfig)
+  private val notMinerConfig = ConfigFactory.parseString("Agate.miner.enable=no").withFallback(minerConfig)
 
   val Configs: Seq[Config] = Seq(
     minerConfig.withFallback(Default.head),

@@ -9,9 +9,9 @@ import scala.util.Random
 
 class AliasTransactionSuite extends BaseTransactionSuite with TableDrivenPropertyChecks {
 
-  private val transferFee    = 1.waves
-  private val leasingFee     = 0.001.waves
-  private val transferAmount = 1.waves
+  private val transferFee    = 1.Agate
+  private val leasingFee     = 0.001.Agate
+  private val transferAmount = 1.Agate
 
   test("Able to send money to an alias") {
     val alias            = randomAlias()
@@ -101,7 +101,7 @@ class AliasTransactionSuite extends BaseTransactionSuite with TableDrivenPropert
     val aliasFee  = calcAliasFee(thirdAddress, thirdAddressAlias)
     val aliasFull = fullAliasByAddress(thirdAddress, thirdAddressAlias)
     //lease maximum value, to pass next thirdAddress
-    val leasingAmount = balance1 - leasingFee - 0.5.waves
+    val leasingAmount = balance1 - leasingFee - 0.5.Agate
 
     val leasingTx = sender.lease(firstAddress, aliasFull, leasingAmount, leasingFee).id
     nodes.waitForHeightAriseAndTxPresent(leasingTx)

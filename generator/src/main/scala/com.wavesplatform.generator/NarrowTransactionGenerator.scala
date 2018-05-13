@@ -45,7 +45,7 @@ class NarrowTransactionGenerator(settings: Settings, val accounts: Seq[PrivateKe
       .selfSigned(
         issueTransactionSender,
         "TRADE".getBytes,
-        "Waves DEX is the best exchange ever".getBytes,
+        "Agate DEX is the best exchange ever".getBytes,
         100000000,
         2,
         reissuable = false,

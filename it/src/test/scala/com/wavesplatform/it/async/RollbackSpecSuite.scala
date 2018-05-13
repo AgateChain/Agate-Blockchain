@@ -82,13 +82,13 @@ class RollbackSpecSuite
     val alias = "test_alias4"
 
     val f = for {
-      aliasTxId <- nodes.head.createAlias(nodes.head.address, alias, 1.waves).map(_.id)
+      aliasTxId <- nodes.head.createAlias(nodes.head.address, alias, 1.Agate).map(_.id)
       txHeights <- Future.traverse(nodes)(_.waitForTransaction(aliasTxId).map(_.height))
       txHeight = txHeights.head
       _               <- Future.traverse(nodes)(_.waitForHeight(txHeight + 1))
       _               <- Future.traverse(nodes)(_.rollback(txHeight - 1, returnToUTX = false))
       _               <- Future.traverse(nodes)(_.waitForHeight(txHeight + 1))
-      secondAliasTxId <- nodes.head.createAlias(nodes.head.address, alias, 1.waves).map(_.id)
+      secondAliasTxId <- nodes.head.createAlias(nodes.head.address, alias, 1.Agate).map(_.id)
       _               <- Future.traverse(nodes)(_.waitForTransaction(secondAliasTxId))
     } yield succeed
 

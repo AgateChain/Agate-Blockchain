@@ -291,7 +291,7 @@ class MatcherTestSuite
     )
   }
 
-  "trader should be able to place a buy waves for asset order without having waves" in {
+  "trader should be able to place a buy waves for asset order without having Agate" in {
     // Bob issues new asset
     val bobAssetQuantity = 10000
     val bobAssetName     = "BobCoin2"
@@ -331,7 +331,7 @@ class MatcherTestSuite
     Await.ready(matcherNode.waitForHeightArise, 1.minute)
   }
 
-  "owner moves assets/waves to another account and order become an invalid" - {
+  "owner moves assets/Agate to another account and order become an invalid" - {
     val bobAssetName             = "BobCoin3"
     var bobAssetIdRaw: String    = ""
     var bobAssetId: ByteStr      = ByteStr.empty
@@ -386,7 +386,7 @@ class MatcherTestSuite
         Await.ready(matcherNode.waitForHeightArise, 1.minute)
       }
 
-      "leased waves, insufficient fee" in {
+      "leased Agate, insufficient fee" in {
         val bobBalance    = Await.result(matcherNode.balance(bobNode.address), 1.minute).balance
         val oldestOrderId = bobPlacesAssetOrder(1000)
         val newestOrderId = bobPlacesAssetOrder(1000)
@@ -409,7 +409,7 @@ class MatcherTestSuite
         Await.ready(matcherNode.waitForHeightArise, 1.minute)
       }
 
-      "moved waves, insufficient fee" in {
+      "moved Agate, insufficient fee" in {
         val bobBalance    = Await.result(matcherNode.balance(bobNode.address), 1.minute).balance
         val oldestOrderId = bobPlacesAssetOrder(1000)
         val newestOrderId = bobPlacesAssetOrder(1000)
@@ -433,9 +433,9 @@ class MatcherTestSuite
       }
     }
 
-    "order with waves" - {
-      "leased waves, insufficient fee" in {
-        // Amount of waves in order is smaller than fee
+    "order with Agate" - {
+      "leased Agate, insufficient fee" in {
+        // Amount of Agate in order is smaller than fee
         val bobBalance = Await.result(matcherNode.balance(bobNode.address), 1.minute).balance
 
         val price   = TransactionFee / 2
@@ -454,7 +454,7 @@ class MatcherTestSuite
         Await.ready(matcherNode.waitForHeightArise, 1.minute)
       }
 
-      "leased waves, insufficient waves" in {
+      "leased Agate, insufficient Agate" in {
         val bobBalance = Await.result(matcherNode.balance(bobNode.address), 1.minute).balance
 
         val price   = 1 * Waves
@@ -473,7 +473,7 @@ class MatcherTestSuite
         Await.ready(matcherNode.waitForHeightArise, 1.minute)
       }
 
-      "moved waves, insufficient fee" in {
+      "moved Agate, insufficient fee" in {
         // Amount of waves in order is smaller than fee
         val bobBalance = Await.result(matcherNode.balance(bobNode.address), 1.minute).balance
 
@@ -644,9 +644,9 @@ object MatcherTestSuite {
   private val TransactionFee   = 300000
   private val Waves            = 100000000L
 
-  private val minerDisabled = parseString("waves.miner.enable = no")
+  private val minerDisabled = parseString("Agate.miner.enable = no")
   private val matcherConfig = parseString(s"""
-       |waves.matcher {
+       |Agate.matcher {
        |  enable = yes
        |  account = 3HmFkAoQRs4Y3PE2uR6ohN7wS4VqPBGKv7k
        |  bind-address = "0.0.0.0"

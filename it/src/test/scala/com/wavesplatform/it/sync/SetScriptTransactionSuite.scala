@@ -29,9 +29,9 @@ class SetScriptTransactionSuite extends BaseTransactionSuite with CancelAfterFai
   private val acc3 = pkFromAddress(fourthAddress)
 
   private val transferAmount: Long = 1.waves
-  private val fee: Long            = 0.001.waves
+  private val fee: Long            = 0.001.Agate
 
-  test("setup acc0 with 1 waves") {
+  test("setup acc0 with 1 Agate") {
     val tx =
       TransferTransactionV2
         .selfSigned(
@@ -39,7 +39,7 @@ class SetScriptTransactionSuite extends BaseTransactionSuite with CancelAfterFai
           assetId = None,
           sender = sender.privateKey,
           recipient = acc0,
-          amount = 3 * transferAmount + 3 * (0.00001.waves + 0.00002.waves), // Script fee
+          amount = 3 * transferAmount + 3 * (0.00001.Agate + 0.00002.Agate), // Script fee
           timestamp = System.currentTimeMillis(),
           feeAssetId = None,
           feeAmount = fee,
@@ -97,7 +97,7 @@ class SetScriptTransactionSuite extends BaseTransactionSuite with CancelAfterFai
           amount = transferAmount,
           timestamp = System.currentTimeMillis(),
           feeAssetId = None,
-          feeAmount = fee + 0.00001.waves + 0.00002.waves,
+          feeAmount = fee + 0.00001.Agate + 0.00002.Agate,
           attachment = Array.emptyByteArray
         )
         .explicitGet()
@@ -115,7 +115,7 @@ class SetScriptTransactionSuite extends BaseTransactionSuite with CancelAfterFai
           amount = transferAmount,
           timestamp = System.currentTimeMillis(),
           feeAssetId = None,
-          feeAmount = fee + 0.004.waves,
+          feeAmount = fee + 0.004.Agate,
           attachment = Array.emptyByteArray,
           proofs = Proofs.empty
         )
@@ -137,7 +137,7 @@ class SetScriptTransactionSuite extends BaseTransactionSuite with CancelAfterFai
         version = SetScriptTransaction.supportedVersions.head,
         sender = acc0,
         script = None,
-        fee = fee + 0.004.waves,
+        fee = fee + 0.004.Agate,
         timestamp = System.currentTimeMillis(),
         proofs = Proofs.empty
       )
@@ -164,7 +164,7 @@ class SetScriptTransactionSuite extends BaseTransactionSuite with CancelAfterFai
           amount = transferAmount,
           timestamp = System.currentTimeMillis(),
           feeAssetId = None,
-          feeAmount = fee + 0.004.waves,
+          feeAmount = fee + 0.004.Agate,
           attachment = Array.emptyByteArray
         )
         .explicitGet()
@@ -203,7 +203,7 @@ class SetScriptTransactionSuite extends BaseTransactionSuite with CancelAfterFai
     val transfers =
       MassTransferTransaction.parseTransfersList(List(Transfer(thirdAddress, transferAmount), Transfer(secondAddress, transferAmount))).right.get
 
-    val massTransferFee = 0.004.waves + 0.0005.waves * 4
+    val massTransferFee = 0.004.Agate + 0.0005.Agate * 4
 
     val unsigned =
       MassTransferTransaction

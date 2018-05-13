@@ -91,10 +91,10 @@ object AsyncHttpApi extends Assertions {
       post(s"${n.matcherApiEndpoint}$path", (rb: RequestBuilder) => rb.setHeader("Content-type", "application/json").setBody(stringify(toJson(body))))
 
     def getOrderStatus(asset: String, orderId: String): Future[MatcherStatusResponse] =
-      matcherGet(s"/matcher/orderbook/$asset/WAVES/$orderId", waitForStatus = true).as[MatcherStatusResponse]
+      matcherGet(s"/matcher/orderbook/$asset/Agate/$orderId", waitForStatus = true).as[MatcherStatusResponse]
 
     def getOrderBook(asset: String): Future[OrderBookResponse] =
-      matcherGet(s"/matcher/orderbook/$asset/WAVES").as[OrderBookResponse]
+      matcherGet(s"/matcher/orderbook/$asset/Agate").as[OrderBookResponse]
 
     def getOrderbookByPublicKey(publicKey: String, timestamp: Long, signature: ByteStr): Future[Seq[OrderbookHistory]] =
       matcherGetWithSignature(s"/matcher/orderbook/$publicKey", timestamp, signature).as[Seq[OrderbookHistory]]
@@ -251,7 +251,7 @@ object AsyncHttpApi extends Assertions {
       postJson("/assets/transfer", TransferV1Request(assetId, feeAssetId, amount, fee, sourceAddress, None, recipient)).as[Transaction]
 
     def payment(sourceAddress: String, recipient: String, amount: Long, fee: Long): Future[Transaction] =
-      postJson("/waves/payment", PaymentRequest(amount, fee, sourceAddress, recipient)).as[Transaction]
+      postJson("/Agate/payment", PaymentRequest(amount, fee, sourceAddress, recipient)).as[Transaction]
 
     def lease(sourceAddress: String, recipient: String, amount: Long, fee: Long): Future[Transaction] =
       postJson("/leasing/lease", LeaseV1Request(sourceAddress, amount, fee, recipient)).as[Transaction]
@@ -505,7 +505,7 @@ object AsyncHttpApi extends Assertions {
         .toScala
     }
 
-    def debugStateAt(height: Long): Future[Map[String, Long]] = getWithApiKey(s"/debug/stateWaves/$height").as[Map[String, Long]]
+    def debugStateAt(height: Long): Future[Map[String, Long]] = getWithApiKey(s"/debug/stateAgate/$height").as[Map[String, Long]]
 
     def debugPortfoliosFor(address: String, considerUnspent: Boolean): Future[Portfolio] = {
       getWithApiKey(s"/debug/portfolios/$address?considerUnspent=$considerUnspent")

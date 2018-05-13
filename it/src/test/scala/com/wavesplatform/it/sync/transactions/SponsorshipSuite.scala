@@ -15,14 +15,14 @@ class SponsorshipSuite extends FreeSpec with NodesFromDocker with Matchers with 
   val Token       = 100L
   val TinyFee     = Token / 2
   val SmallFee    = Token + Token / 2
-  val minWavesFee = 0.001.waves
+  val minWavesFee = 0.001.Agate
   val LargeFee    = 10 * Token
 
   override def nodeConfigs: Seq[Config] =
     NodeConfigs.newBuilder
       .overrideBase(_.quorum(0))
-      .overrideBase(_.raw("waves.blockchain.custom.functionality.blocks-for-feature-activation=1"))
-      .overrideBase(_.raw("waves.blockchain.custom.functionality.feature-check-blocks-period=1"))
+      .overrideBase(_.raw("Agate.blockchain.custom.functionality.blocks-for-feature-activation=1"))
+      .overrideBase(_.raw("Agate.blockchain.custom.functionality.feature-check-blocks-period=1"))
       .withDefault(1)
       .withSpecial(3, _.nonMiner)
       .buildNonConflicting()
@@ -59,7 +59,7 @@ class SponsorshipSuite extends FreeSpec with NodesFromDocker with Matchers with 
                sponsorAssetTotal,
                decimals = 2,
                reissuable = false,
-               fee = 1 * Waves)
+               fee = 1 * Agate)
         .id
     nodes.waitForHeightAriseAndTxPresent(sponsorAssetId)
 
@@ -90,11 +90,11 @@ class SponsorshipSuite extends FreeSpec with NodesFromDocker with Matchers with 
     }
 
     "not enought balance for fee" in {
-      assertBadRequestAndResponse(bob.transfer(bob.address, alice.address, 1.waves, SmallFee, None, Some(sponsorAssetId)), "unavailable funds")
+      assertBadRequestAndResponse(bob.transfer(bob.address, alice.address, 1.Agate, SmallFee, None, Some(sponsorAssetId)), "unavailable funds")
     }
 
-    val minerWavesBalanceAfterFirstXferTest   = minerWavesBalance + 2.waves + minWavesFee + Sponsorship.FeeUnit * SmallFee / Token
-    val sponsorWavesBalanceAfterFirstXferTest = sponsorWavesBalance - 2.waves - minWavesFee - Sponsorship.FeeUnit * SmallFee / Token
+    val minerWavesBalanceAfterFirstXferTest   = minerWavesBalance + 2.Agate + minWavesFee + Sponsorship.FeeUnit * SmallFee / Token
+    val sponsorWavesBalanceAfterFirstXferTest = sponsorWavesBalance - 2.Agate - minWavesFee - Sponsorship.FeeUnit * SmallFee / Token
 
     "fee should be written off in issued asset" in {
       val transferTxCustomFeeAlice = alice.transfer(alice.address, bob.address, 10 * Token, SmallFee, Some(sponsorAssetId), Some(sponsorAssetId)).id
@@ -107,8 +107,8 @@ class SponsorshipSuite extends FreeSpec with NodesFromDocker with Matchers with 
       miner.assertBalances(miner.address, minerWavesBalanceAfterFirstXferTest)
     }
 
-    "waves fee depends on sponsor fee and total sponsor tokens" in {
-      val transferTxCustomFeeAlice = alice.transfer(alice.address, bob.address, 1.waves, LargeFee, None, Some(sponsorAssetId)).id
+    "Agate fee depends on sponsor fee and total sponsor tokens" in {
+      val transferTxCustomFeeAlice = alice.transfer(alice.address, bob.address, 1.Agate, LargeFee, None, Some(sponsorAssetId)).id
       nodes.waitForHeightAriseAndTxPresent(transferTxCustomFeeAlice)
       assert(!transferTxCustomFeeAlice.isEmpty)
       miner.assertAssetBalance(sponsor.address, sponsorAssetId, sponsorAssetTotal / 2 + SmallFee + LargeFee)
@@ -119,7 +119,7 @@ class SponsorshipSuite extends FreeSpec with NodesFromDocker with Matchers with 
     }
 
     "cancel sponsorship, cannot pay fees in non sponsored assets " in {
-      val cancelSponsorshipTxId = sponsor.cancelSponsorship(sponsor.address, sponsorAssetId, fee = 1.waves).id
+      val cancelSponsorshipTxId = sponsor.cancelSponsorship(sponsor.address, sponsorAssetId, fee = 1.Agate).id
       nodes.waitForHeightAriseAndTxPresent(cancelSponsorshipTxId)
       assert(!cancelSponsorshipTxId.isEmpty)
       assertSponsorship(sponsorAssetId, 0L)

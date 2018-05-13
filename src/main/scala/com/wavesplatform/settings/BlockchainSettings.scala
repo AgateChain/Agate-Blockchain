@@ -156,8 +156,8 @@ object BlockchainSettings {
         ('W', FunctionalitySettings.MAINNET, GenesisSettings.MAINNET)
       case BlockchainType.CUSTOM =>
         val addressSchemeCharacter = config.as[String](s"$configPath.custom.address-scheme-character").charAt(0)
-        val functionalitySettings  = config.as[FunctionalitySettings]("waves.blockchain.custom.functionality")
-        val genesisSettings        = config.as[GenesisSettings]("waves.blockchain.custom.genesis")
+        val functionalitySettings  = config.as[FunctionalitySettings]("Agate.blockchain.custom.functionality")
+        val genesisSettings        = config.as[GenesisSettings]("Agate.blockchain.custom.genesis")
         (addressSchemeCharacter, functionalitySettings, genesisSettings)
     }
 

@@ -29,7 +29,7 @@ class NotActivateFeatureTestSuite
     NodeConfigs.newBuilder
       .overrideBase(
         _.raw(
-          s"""waves {
+          s"""Agate {
          |  blockchain {
          |    custom {
          |      functionality {

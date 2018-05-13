@@ -32,7 +32,7 @@ object BaseTargetChecker {
     println(s"Genesis TS = ${Instant.ofEpochMilli(genesisBlock.timestamp)}")
 
     val m = NodeConfigs.Default.map(_.withFallback(sharedConfig)).collect {
-      case cfg if cfg.as[Boolean]("waves.miner.enable") =>
+      case cfg if cfg.as[Boolean]("Agate.miner.enable") =>
         val publicKey = PublicKeyAccount(cfg.as[ByteStr]("public-key").arr)
         val address   = publicKey.toAddress
         PoSCalc.nextBlockGenerationTime(1, bu, fs, genesisBlock, publicKey) match {

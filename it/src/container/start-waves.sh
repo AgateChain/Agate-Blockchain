@@ -1,4 +1,4 @@
 #!/bin/bash
 
-echo Options: $WAVES_OPTS
-java $WAVES_OPTS -jar /opt/waves/waves.jar /opt/waves/template.conf
+echo Options: $Agate_OPTS
+java $Agate_OPTS -jar /opt/Agate/Agate.jar /opt/Agate/template.conf

@@ -17,13 +17,13 @@ class TransferTransactionV1Suite extends BaseTransactionSuite with TransferSendi
 
   private val waitCompletion       = 2.minutes
   private val defaultAssetQuantity = 100000
-  private val transferAmount       = 5.waves
-  private val leasingAmount        = 5.waves
-  private val leasingFee           = 0.003.waves
-  private val transferFee          = 0.002.waves
-  private val issueFee             = 5.waves
+  private val transferAmount       = 5.Agate
+  private val leasingAmount        = 5.Agate
+  private val leasingFee           = 0.003.Agate
+  private val transferFee          = 0.002.Agate
+  private val issueFee             = 5.Agate
 
-  test("asset transfer changes sender's and recipient's asset balance; issuer's.waves balance is decreased by fee") {
+  test("asset transfer changes sender's and recipient's asset balance; issuer's.Agate balance is decreased by fee") {
     val f = for {
       ((firstBalance, firstEffBalance), (secondBalance, secondEffBalance)) <- notMiner
         .accountBalances(firstAddress)
@@ -47,7 +47,7 @@ class TransferTransactionV1Suite extends BaseTransactionSuite with TransferSendi
     Await.result(f, waitCompletion)
   }
 
-  test("waves transfer changes waves balances and eff.b.") {
+  test("Agate transfer changes Agate balances and eff.b.") {
     val f = for {
       ((firstBalance, firstEffBalance), (secondBalance, secondEffBalance)) <- notMiner
         .accountBalances(firstAddress)
@@ -63,10 +63,10 @@ class TransferTransactionV1Suite extends BaseTransactionSuite with TransferSendi
     Await.result(f, waitCompletion)
   }
 
-  test("invalid signed waves transfer should not be in UTX or blockchain") {
+  test("invalid signed Agate transfer should not be in UTX or blockchain") {
     def invalidByTsTx(ts: Long) =
       TransferTransactionV1
-        .selfSigned(None, sender.privateKey, AddressOrAlias.fromString(sender.address).right.get, 1, ts, None, 1.waves, Array.emptyByteArray)
+        .selfSigned(None, sender.privateKey, AddressOrAlias.fromString(sender.address).right.get, 1, ts, None, 1.Agate, Array.emptyByteArray)
         .right
         .get
 
@@ -110,7 +110,7 @@ class TransferTransactionV1Suite extends BaseTransactionSuite with TransferSendi
     Await.result(f, waitCompletion)
   }
 
-  test("can not make transfer without having enough of waves") {
+  test("can not make transfer without having enough of Agate") {
     val f = for {
       fb <- traverse(nodes)(_.height).map(_.min)
 
@@ -118,7 +118,7 @@ class TransferTransactionV1Suite extends BaseTransactionSuite with TransferSendi
         .accountBalances(firstAddress)
         .zip(notMiner.accountBalances(secondAddress))
 
-      transferFailureAssertion <- assertBadRequest(sender.transfer(secondAddress, firstAddress, secondBalance + 1.waves, transferFee))
+      transferFailureAssertion <- assertBadRequest(sender.transfer(secondAddress, firstAddress, secondBalance + 1.Agate, transferFee))
 
       _ <- traverse(nodes)(_.waitForHeight(fb + 2))
 
@@ -158,7 +158,7 @@ class TransferTransactionV1Suite extends BaseTransactionSuite with TransferSendi
     Await.result(f, waitCompletion)
   }
 
-  test("can not make transfer without having enough of your own waves") {
+  test("can not make transfer without having enough of your own Agate") {
     val f = for {
       fb <- traverse(nodes)(_.height).map(_.min)
 

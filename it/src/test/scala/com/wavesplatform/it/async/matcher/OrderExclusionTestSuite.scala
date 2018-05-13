@@ -98,7 +98,7 @@ object OrderExclusionTestSuite {
   import NodeConfigs.Default
 
   private val matcherConfig = ConfigFactory.parseString(s"""
-       |waves.matcher {
+       |Agate.matcher {
        |  enable=yes
        |  account="3Hm3LGoNPmw1VTZ3eRA2pAfeQPhnaBm6YFC"
        |  bind-address="0.0.0.0"
@@ -106,19 +106,19 @@ object OrderExclusionTestSuite {
        |  blacklisted-assets = [$ForbiddenAssetId]
        |  order-cleanup-interval = 20s
        |}
-       |waves.rest-api {
+       |Agate.rest-api {
        |    enable = yes
        |    api-key-hash = 7L6GpLHhA5KyJTAVc8WFHwEcyTY8fC8rRbyMCiFnM4i
        |}
-       |waves.miner.enable=no
+       |Agate.miner.enable=no
       """.stripMargin)
 
   private val nonGeneratingPeersConfig = ConfigFactory.parseString(
     """
-      |waves.matcher {
+      |Agate.matcher {
       | order-cleanup-interval = 30s
       |}
-      |waves.miner.enable=no
+      |Agate.miner.enable=no
     """.stripMargin
   )
 

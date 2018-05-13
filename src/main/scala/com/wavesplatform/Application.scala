@@ -365,7 +365,7 @@ object Application extends ScorexLogging {
       // application config needs to be resolved wrt both system properties *and* user-supplied config.
       case Some(file) =>
         val cfg = ConfigFactory.parseFile(file)
-        if (!cfg.hasPath("waves")) {
+        if (!cfg.hasPath("Agate")) {
           log.error("Malformed configuration file was provided! Aborting!")
           log.error("Please, read following article about configuration file format:")
           log.error("https://github.com/wavesplatform/Waves/wiki/Waves-Node-configuration-file")
@@ -396,13 +396,13 @@ object Application extends ScorexLogging {
     val config = readConfig(args.headOption)
 
     // DO NOT LOG BEFORE THIS LINE, THIS PROPERTY IS USED IN logback.xml
-    System.setProperty("waves.directory", config.getString("waves.directory"))
+    System.setProperty("Agate.directory", config.getString("Agate.directory"))
     log.info("Starting...")
     sys.addShutdownHook {
       SystemInformationReporter.report(config)
     }
 
-    val settings = WavesSettings.fromConfig(config)
+    val settings = AgateSettings.fromConfig(config)
     Kamon.start(config)
     val isMetricsStarted = Metrics.start(settings.metrics)
 

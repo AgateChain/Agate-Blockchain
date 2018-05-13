@@ -7,7 +7,7 @@ import net.ceedubs.ficus.Ficus._
 case class CheckpointsSettings(publicKey: ByteStr)
 
 object CheckpointsSettings {
-  val configPath: String = "waves.checkpoints"
+  val configPath: String = "Agate.checkpoints"
 
   def fromConfig(config: Config): CheckpointsSettings = {
     val publicKey = config.as[ByteStr](s"$configPath.public-key")

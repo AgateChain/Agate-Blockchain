@@ -51,7 +51,7 @@ object StateSyntheticBenchmark {
     protected override def txGenP(sender: PrivateKeyAccount, ts: Long): Gen[Transaction] =
       for {
         recipient: PrivateKeyAccount <- accountGen
-        amount                       <- Gen.choose(1, waves(1))
+        amount                       <- Gen.choose(1, Agate(1))
       } yield
         TransferTransactionV2
           .selfSigned(
