@@ -130,7 +130,7 @@ class MatcherTestSuite
     // Alice checks that she sold some assets
     waitForAssetBalance(aliceNode, aliceAsset, 800)
 
-    // Bob checks that he spent some Waves
+    // Bob checks that he spent some Agate
     val updatedBobBalance = getBalance(bobNode)
     updatedBobBalance._1 shouldBe (bobBalance._1 - 2 * Waves * 200 - MatcherFee)
     bobBalance = updatedBobBalance
@@ -248,7 +248,7 @@ class MatcherTestSuite
   }
 
   "request order book for blacklisted pair" in {
-    val f = matcherNode.matcherGetStatusCode(s"/matcher/orderbook/$ForbiddenAssetId/WAVES", 404)
+    val f = matcherNode.matcherGetStatusCode(s"/matcher/orderbook/$ForbiddenAssetId/Agate", 404)
 
     val result = Await.result(f, 1.minute)
     result.message shouldBe s"Invalid Asset ID: $ForbiddenAssetId"
@@ -291,7 +291,7 @@ class MatcherTestSuite
     )
   }
 
-  "trader should be able to place a buy waves for asset order without having Agate" in {
+  "trader should be able to place a buy Agate for asset order without having Agate" in {
     // Bob issues new asset
     val bobAssetQuantity = 10000
     val bobAssetName     = "BobCoin2"
@@ -474,7 +474,7 @@ class MatcherTestSuite
       }
 
       "moved Agate, insufficient fee" in {
-        // Amount of waves in order is smaller than fee
+        // Amount of Agate in order is smaller than fee
         val bobBalance = Await.result(matcherNode.balance(bobNode.address), 1.minute).balance
 
         val price   = TransactionFee / 2

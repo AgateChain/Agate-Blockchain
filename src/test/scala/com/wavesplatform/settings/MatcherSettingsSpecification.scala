@@ -11,8 +11,8 @@ class MatcherSettingsSpecification extends FlatSpec with Matchers {
   "MatcherSettings" should "read values" in {
     val config = loadConfig(
       ConfigFactory.parseString(
-        """waves {
-        |  directory: "/waves"
+        """Agate {
+        |  directory: "/Agate"
         |  matcher {
         |    enable: yes
         |    account: "BASE58MATCHERACCOUNT"
@@ -25,13 +25,13 @@ class MatcherSettingsSpecification extends FlatSpec with Matchers {
         |    max-open-orders: 1000
         |    rest-order-limit: 100
         |    price-assets: [
-        |      "WAVES",
+        |      "Agate",
         |      "8LQW8f7P5d5PZM7GtZEBgaqRPGSzS3DfPuiXrURJ4AJS",
         |      "DHgwrRvVyqJsepd32YbBqUeDH4GJ1N984X8QoekjgH8J"
         |    ]
         |    predefined-pairs: [
-        |      {amountAsset = "WAVES", priceAsset = "8LQW8f7P5d5PZM7GtZEBgaqRPGSzS3DfPuiXrURJ4AJS"},
-        |      {amountAsset = "DHgwrRvVyqJsepd32YbBqUeDH4GJ1N984X8QoekjgH8J", priceAsset = "WAVES"},
+        |      {amountAsset = "Agate", priceAsset = "8LQW8f7P5d5PZM7GtZEBgaqRPGSzS3DfPuiXrURJ4AJS"},
+        |      {amountAsset = "DHgwrRvVyqJsepd32YbBqUeDH4GJ1N984X8QoekjgH8J", priceAsset = "Agate"},
         |      {amountAsset = "DHgwrRvVyqJsepd32YbBqUeDH4GJ1N984X8QoekjgH8J", priceAsset = "8LQW8f7P5d5PZM7GtZEBgaqRPGSzS3DfPuiXrURJ4AJS"},
         |    ]
         |    max-timestamp-diff = 3h
@@ -52,17 +52,17 @@ class MatcherSettingsSpecification extends FlatSpec with Matchers {
     settings.port should be(6886)
     settings.minOrderFee should be(100000)
     settings.orderMatchTxFee should be(100000)
-    settings.journalDataDir should be("/waves/matcher/journal")
-    settings.snapshotsDataDir should be("/waves/matcher/snapshots")
+    settings.journalDataDir should be("/Agate/matcher/journal")
+    settings.snapshotsDataDir should be("/Agate/matcher/snapshots")
     settings.snapshotsInterval should be(1.day)
     settings.orderCleanupInterval should be(5.minute)
     settings.maxOpenOrders should be(1000)
     settings.maxOrdersPerRequest should be(100)
-    settings.priceAssets should be(Seq("WAVES", "8LQW8f7P5d5PZM7GtZEBgaqRPGSzS3DfPuiXrURJ4AJS", "DHgwrRvVyqJsepd32YbBqUeDH4GJ1N984X8QoekjgH8J"))
+    settings.priceAssets should be(Seq("Agate", "8LQW8f7P5d5PZM7GtZEBgaqRPGSzS3DfPuiXrURJ4AJS", "DHgwrRvVyqJsepd32YbBqUeDH4GJ1N984X8QoekjgH8J"))
     settings.predefinedPairs should be(
       Seq(
-        AssetPair.createAssetPair("WAVES", "8LQW8f7P5d5PZM7GtZEBgaqRPGSzS3DfPuiXrURJ4AJS").get,
-        AssetPair.createAssetPair("DHgwrRvVyqJsepd32YbBqUeDH4GJ1N984X8QoekjgH8J", "WAVES").get,
+        AssetPair.createAssetPair("Agate", "8LQW8f7P5d5PZM7GtZEBgaqRPGSzS3DfPuiXrURJ4AJS").get,
+        AssetPair.createAssetPair("DHgwrRvVyqJsepd32YbBqUeDH4GJ1N984X8QoekjgH8J", "Agate").get,
         AssetPair.createAssetPair("DHgwrRvVyqJsepd32YbBqUeDH4GJ1N984X8QoekjgH8J", "8LQW8f7P5d5PZM7GtZEBgaqRPGSzS3DfPuiXrURJ4AJS").get
       ))
     settings.blacklistedAssets shouldBe Set("a")

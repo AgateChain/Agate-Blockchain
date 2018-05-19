@@ -1,6 +1,6 @@
-# Agate Blockchain [![Build Status](https://travis-ci.org/wavesplatform/Waves.svg?branch=master)](https://travis-ci.org/wavesplatform/Waves) [![](https://images.microbadger.com/badges/version/wavesplatform/waves-testnet.svg)](http://microbadger.com/images/wavesplatform/waves-testnet "Testnet Node Docker image")
+# Agate Blockchain [![Build Status](https://travis-ci.org/Agateplatform/Agate.svg?branch=master)](https://travis-ci.org/Agateplatform/Agate) [![](https://images.microbadger.com/badges/version/Agateplatform/Agate-testnet.svg)](http://microbadger.com/images/Agateplatform/Agate-testnet "Testnet Node Docker image")
 
-In the master branch there is a code with functions that is under development. The latest release for each network can be found in the [Releases section](https://github.com/wavesplatform/Waves/releases), you can switch to the corresponding tag and build the application.
+In the master branch there is a code with functions that is under development. The latest release for each network can be found in the [Releases section](https://github.com/Agateplatform/Agate/releases), you can switch to the corresponding tag and build the application.
 
 [How to configure Agate node](https://github.com/Agateplatform/Agate/wiki/How-to-install-Agate-node)
 

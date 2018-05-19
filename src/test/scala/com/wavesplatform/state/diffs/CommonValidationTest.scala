@@ -82,7 +82,7 @@ class CommonValidationTest extends PropSpec with PropertyChecks with Matchers wi
   }
 
   property("checkFee for smart tokens fails if the fee is in tokens") {
-    smartTokensCheckFeeTest(feeInAssets = true, feeAmount = 1)(_ should produce("Transactions with smart tokens require Waves as fee"))
+    smartTokensCheckFeeTest(feeInAssets = true, feeAmount = 1)(_ should produce("Transactions with smart tokens require Agate as fee"))
   }
 
   private def smartAccountCheckFeeTest(feeInAssets: Boolean, feeAmount: Long)(f: Either[ValidationError, Unit] => Assertion): Unit = {
@@ -104,7 +104,7 @@ class CommonValidationTest extends PropSpec with PropertyChecks with Matchers wi
   }
 
   property("checkFee for smart accounts fails if the fee is in tokens") {
-    smartAccountCheckFeeTest(feeInAssets = true, feeAmount = 1)(_ should produce("Transactions from scripted accounts require Waves as fee"))
+    smartAccountCheckFeeTest(feeInAssets = true, feeAmount = 1)(_ should produce("Transactions from scripted accounts require Agate as fee"))
   }
 
   property("checkFee sponsored + smart tokens + smart accounts sunny") {

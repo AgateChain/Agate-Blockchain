@@ -16,35 +16,35 @@ import scorex.transaction.transfer._
 class FeeCalculatorSpecification extends PropSpec with PropertyChecks with Matchers with TransactionGen with MockFactory {
 
   private val configString =
-    """waves {
+    """Agate {
       |  fees {
       |    payment {
-      |      WAVES = 100000
+      |      Agate = 100000
       |    }
       |    issue {
-      |      WAVES = 100000000
+      |      Agate = 100000000
       |    }
       |    transfer {
-      |      WAVES = 100000
+      |      Agate = 100000
       |      "JAudr64y6YxTgLn9T5giKKqWGkbMfzhdRAxmNNfn6FJN" = 2
       |    }
       |    reissue {
-      |      WAVES = 200000
+      |      Agate = 200000
       |    }
       |    burn {
-      |      WAVES = 300000
+      |      Agate = 300000
       |    }
       |    lease {
-      |      WAVES = 400000
+      |      Agate = 400000
       |    }
       |    lease-cancel {
-      |      WAVES = 500000
+      |      Agate = 500000
       |    }
       |    create-alias {
-      |      WAVES = 600000
+      |      Agate = 600000
       |    }
       |    data {
-      |      WAVES = 100000
+      |      Agate = 100000
       |    }
       |  }
       |}""".stripMargin

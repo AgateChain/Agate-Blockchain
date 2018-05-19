@@ -28,7 +28,7 @@ class SetScriptTransactionSuite extends BaseTransactionSuite with CancelAfterFai
   private val acc2 = pkFromAddress(thirdAddress)
   private val acc3 = pkFromAddress(fourthAddress)
 
-  private val transferAmount: Long = 1.waves
+  private val transferAmount: Long = 1.Agate
   private val fee: Long            = 0.001.Agate
 
   test("setup acc0 with 1 Agate") {

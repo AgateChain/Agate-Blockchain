@@ -35,7 +35,7 @@ class CreateAliasTransactionDiffTest extends PropSpec with PropertyChecks with M
     anotherAliasTx           <- createAliasGen(master, alias2, fee + 3, ts)
   } yield (genesis, aliasTx, sameAliasTx, sameAliasOtherSenderTx, anotherAliasTx)
 
-  property("can create and resolve aliases preserving waves invariant") {
+  property("can create and resolve aliases preserving Agate invariant") {
     forAll(preconditionsAndAliasCreations) {
       case (gen, aliasTx, _, _, anotherAliasTx) =>
         assertDiffAndState(Seq(TestBlock.create(Seq(gen, aliasTx))), TestBlock.create(Seq(anotherAliasTx)), fs) {

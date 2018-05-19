@@ -8,7 +8,7 @@ import org.scalatest.prop.TableDrivenPropertyChecks
 class IssueTransactionV1Suite extends BaseTransactionSuite with TableDrivenPropertyChecks {
 
   private val defaultQuantity = 100000
-  private val assetFee        = 5.waves
+  private val assetFee        = 5.Agate
 
   test("asset issue changes issuer's asset balance; issuer's Agate balance is decreased by fee") {
     val assetName        = "myasset"

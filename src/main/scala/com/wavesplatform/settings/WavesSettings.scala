@@ -26,7 +26,7 @@ object WavesSettings {
 
   import NetworkSettings.networkSettingsValueReader
 
-  val configPath: String = "waves"
+  val configPath: String = "Agate"
 
   def fromConfig(config: Config): WavesSettings = {
     val directory               = config.as[String](s"$configPath.directory")

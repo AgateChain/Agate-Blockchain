@@ -8,9 +8,9 @@ import scala.concurrent.duration._
 
 class BlockchainSettingsSpecification extends FlatSpec with Matchers {
   "BlockchainSettings" should "read custom values" in {
-    val config   = loadConfig(ConfigFactory.parseString("""waves {
-        |  directory = "/waves"
-        |  data-directory = "/waves/data"
+    val config   = loadConfig(ConfigFactory.parseString("""Agate {
+        |  directory = "/Agate"
+        |  data-directory = "/Agate/data"
         |  blockchain {
         |    max-transactions-per-block-diff = 201
         |    min-blocks-in-memory = 202
@@ -81,9 +81,9 @@ class BlockchainSettingsSpecification extends FlatSpec with Matchers {
   }
 
   it should "read testnet settings" in {
-    val config   = loadConfig(ConfigFactory.parseString("""waves {
-        |  directory = "/waves"
-        |  data-directory = "/waves/data"
+    val config   = loadConfig(ConfigFactory.parseString("""Agate {
+        |  directory = "/Agate"
+        |  data-directory = "/Agate/data"
         |  blockchain {
         |    max-transactions-per-block-diff = 202
         |    min-blocks-in-memory = 203
@@ -122,9 +122,9 @@ class BlockchainSettingsSpecification extends FlatSpec with Matchers {
   }
 
   it should "read mainnet settings" in {
-    val config   = loadConfig(ConfigFactory.parseString("""waves {
-        |  directory = "/waves"
-        |  data-directory = "/waves/data"
+    val config   = loadConfig(ConfigFactory.parseString("""Agate {
+        |  directory = "/Agate"
+        |  data-directory = "/Agate/data"
         |  blockchain {
         |    max-transactions-per-block-diff = 203
         |    min-blocks-in-memory = 204

@@ -44,7 +44,7 @@ object Node {
 
     def publicKeyStr = Base58.encode(n.publicKey.publicKey)
 
-    def fee(txTypeId: Byte, asset: String = "WAVES"): Long = n.settings.feesSettings.fees(txTypeId).find(_.asset == asset).get.fee
+    def fee(txTypeId: Byte, asset: String = "Agate"): Long = n.settings.feesSettings.fees(txTypeId).find(_.asset == asset).get.fee
 
     def blockDelay: FiniteDuration = n.settings.blockchainSettings.genesisSettings.averageBlockDelay
   }

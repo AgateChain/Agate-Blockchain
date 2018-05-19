@@ -12,19 +12,19 @@ import org.scalatest.{Matchers, path}
 
 class PeerDatabaseImplSpecification extends path.FreeSpecLike with Matchers {
 
-  private val config1   = ConfigFactory.parseString("""waves.network {
+  private val config1   = ConfigFactory.parseString("""Agate.network {
       |  file = null
       |  known-peers = []
       |  peers-data-residence-time: 2s
       |}""".stripMargin).withFallback(ConfigFactory.load()).resolve()
-  private val settings1 = config1.as[NetworkSettings]("waves.network")
+  private val settings1 = config1.as[NetworkSettings]("Agate.network")
 
-  private val config2   = ConfigFactory.parseString("""waves.network {
+  private val config2   = ConfigFactory.parseString("""Agate.network {
       |  file = null
       |  known-peers = []
       |  peers-data-residence-time: 10s
       |}""".stripMargin).withFallback(ConfigFactory.load()).resolve()
-  private val settings2 = config2.as[NetworkSettings]("waves.network")
+  private val settings2 = config2.as[NetworkSettings]("Agate.network")
 
   val database  = new PeerDatabaseImpl(settings1)
   val database2 = new PeerDatabaseImpl(settings2)
@@ -105,38 +105,38 @@ class PeerDatabaseImplSpecification extends path.FreeSpecLike with Matchers {
 
     "if blacklisting is disable" - {
       "should clear blacklist at start" in {
-        val databaseFile = Files.createTempFile("waves-tests", "PeerDatabaseImplSpecification-blacklisting-clear").toAbsolutePath.toString
+        val databaseFile = Files.createTempFile("Agate-tests", "PeerDatabaseImplSpecification-blacklisting-clear").toAbsolutePath.toString
         val path         = if (File.separatorChar == '\\') databaseFile.replace('\\', '/') else databaseFile
-        val prevConfig   = ConfigFactory.parseString(s"""waves.network {
+        val prevConfig   = ConfigFactory.parseString(s"""Agate.network {
              |  file = "$path"
              |  known-peers = []
              |  peers-data-residence-time: 100s
              |}""".stripMargin).withFallback(ConfigFactory.load()).resolve()
-        val prevSettings = prevConfig.as[NetworkSettings]("waves.network")
+        val prevSettings = prevConfig.as[NetworkSettings]("Agate.network")
         val prevDatabase = new PeerDatabaseImpl(prevSettings)
         prevDatabase.blacklist(address1, "I don't like it")
         prevDatabase.close()
 
-        val config   = ConfigFactory.parseString(s"""waves.network {
+        val config   = ConfigFactory.parseString(s"""Agate.network {
              |  file = "$path"
              |  known-peers = []
              |  peers-data-residence-time: 100s
              |  enable-blacklisting = no
              |}""".stripMargin).withFallback(ConfigFactory.load()).resolve()
-        val settings = config.as[NetworkSettings]("waves.network")
+        val settings = config.as[NetworkSettings]("Agate.network")
         val database = new PeerDatabaseImpl(settings)
 
         database.blacklistedHosts shouldBe empty
       }
 
       "should not add nodes to the blacklist" in {
-        val config   = ConfigFactory.parseString(s"""waves.network {
+        val config   = ConfigFactory.parseString(s"""Agate.network {
              |  file = null
              |  known-peers = []
              |  peers-data-residence-time: 100s
              |  enable-blacklisting = no
              |}""".stripMargin).withFallback(ConfigFactory.load()).resolve()
-        val settings = config.as[NetworkSettings]("waves.network")
+        val settings = config.as[NetworkSettings]("Agate.network")
         val database = new PeerDatabaseImpl(settings)
         database.blacklist(address1, "I don't like it")
 

@@ -119,18 +119,18 @@ class SponsorshipDiffTest extends PropSpec with PropertyChecks with Matchers wit
           blockDiffEi should produce("unavailable funds")
         }
         assertDiffEi(setupBlocks, block(Seq(insufficientFee)), s) { blockDiffEi =>
-          blockDiffEi should produce("does not exceed minimal value of 100000 WAVES")
+          blockDiffEi should produce("does not exceed minimal value of 100000 Agate")
         }
         assertDiffEi(setupBlocks, block(Seq(wavesOverspend)), s) { blockDiffEi =>
           if (wavesOverspend.fee > issue.quantity)
             blockDiffEi should produce("unavailable funds")
           else
-            blockDiffEi should produce("negative waves balance")
+            blockDiffEi should produce("negative Agate balance")
         }
     }
   }
 
-  property("sponsor has no WAVES but receives them just in time") {
+  property("sponsor has no Agate but receives them just in time") {
     val s = settings(0)
     val setup = for {
       master    <- accountGen

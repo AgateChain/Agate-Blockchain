@@ -75,7 +75,7 @@ class SponsorshipSuite extends FreeSpec with NodesFromDocker with Matchers with 
       assertSponsorship(sponsorAssetId, 1 * Token)
       assertMinAssetFee(sponsorId, JsNumber(1 * Token))
       miner.assertAssetBalance(sponsor.address, sponsorAssetId, sponsorAssetTotal / 2)
-      miner.assertBalances(sponsor.address, sponsorWavesBalance - 2.waves - minWavesFee)
+      miner.assertBalances(sponsor.address, sponsorWavesBalance - 2.Agate - minWavesFee)
       miner.assertAssetBalance(alice.address, sponsorAssetId, sponsorAssetTotal / 2)
 
     }

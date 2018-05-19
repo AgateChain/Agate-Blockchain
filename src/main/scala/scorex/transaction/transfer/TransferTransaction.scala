@@ -59,7 +59,7 @@ object TransferTransaction {
   val MaxAttachmentStringSize: Int = base58Length(MaxAttachmentSize)
 
   def validate(amount: Long, feeAmount: Long, attachment: Array[Byte]): Either[ValidationError, Unit] = {
-    (validateAmount(amount, "waves"), validateFee(feeAmount), validateAttachment(attachment), validateSum(Seq(amount, feeAmount)))
+    (validateAmount(amount, "Agate"), validateFee(feeAmount), validateAttachment(attachment), validateSum(Seq(amount, feeAmount)))
       .mapN { case _ => () }
       .toEither
       .leftMap(_.head)

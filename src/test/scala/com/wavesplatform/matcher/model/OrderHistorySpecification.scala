@@ -57,7 +57,7 @@ class OrderHistorySpecification
     oh.activeOrderIdsByAddress(ord1.senderPublicKey.address) shouldBe Set(pair.amountAsset -> ord1.idStr())
   }
 
-  property("New buy WAVES order added") {
+  property("New buy Agate order added") {
     val pair = AssetPair(None, Some(ByteStr("BTC".getBytes)))
     val ord1 = buy(pair, 0.0008, 10000)
 
@@ -71,7 +71,7 @@ class OrderHistorySpecification
     oh.activeOrderIdsByAddress(ord1.senderPublicKey.address) shouldBe Set(pair.priceAsset -> ord1.idStr())
   }
 
-  property("New sell WAVES order added") {
+  property("New sell Agate order added") {
     val pair = AssetPair(None, Some(ByteStr("BTC".getBytes)))
     val ord1 = sell(pair, 0.0008, 10000)
 
@@ -84,7 +84,7 @@ class OrderHistorySpecification
     oh.activeOrderIdsByAddress(ord1.senderPublicKey.address) shouldBe Set(pair.amountAsset -> ord1.idStr())
   }
 
-  property("New buy and sell WAVES order added") {
+  property("New buy and sell Agate order added") {
     val pk   = PrivateKeyAccount("private".getBytes("utf-8"))
     val pair = AssetPair(None, Some(ByteStr("BTC".getBytes)))
     val ord1 = buy(pair, 0.0008, 100000000, Some(pk))
@@ -105,7 +105,7 @@ class OrderHistorySpecification
     oh.activeOrderIdsByAddress(ord1.senderPublicKey.address) shouldBe Set(pair.priceAsset -> ord1.idStr(), pair.amountAsset -> ord2.idStr())
   }
 
-  property("Buy WAVES order filled") {
+  property("Buy Agate order filled") {
     val pair = AssetPair(None, Some(ByteStr("BTC".getBytes)))
     val ord1 = buy(pair, 0.0008, 10000)
     val ord2 = sell(pair, 0.0007, 10000)
@@ -127,7 +127,7 @@ class OrderHistorySpecification
     oh.activeOrderIdsByAddress(ord2.senderPublicKey.address) shouldBe empty
   }
 
-  property("Sell WAVES order - filled, buy order - partial") {
+  property("Sell Agate order - filled, buy order - partial") {
     val pair = AssetPair(None, Some(ByteStr("BTC".getBytes)))
     val ord1 = sell(pair, 0.0008, 100000000)
     val ord2 = buy(pair, 0.00085, 120000000)
@@ -152,7 +152,7 @@ class OrderHistorySpecification
     oh.activeOrderIdsByAddress(ord2.senderPublicKey.address) shouldBe Set(pair.priceAsset -> ord2.idStr())
   }
 
-  property("Buy WAVES order - filled with 2 steps, sell order - partial") {
+  property("Buy Agate order - filled with 2 steps, sell order - partial") {
     val pair = AssetPair(None, Some(ByteStr("BTC".getBytes)))
     val ord1 = buy(pair, 0.0008, 100000000, matcherFee = Some(300001L))
     val ord2 = sell(pair, 0.00075, 50000000, matcherFee = Some(300001L))
@@ -351,7 +351,7 @@ class OrderHistorySpecification
 
     oh.openPortfolio(pk.address) shouldBe
       OpenPortfolio(
-        Map("WAVES"     -> (2 * matcherFee - LimitOrder(ord1).getReceiveAmount - LimitOrder(ord2).getReceiveAmount),
+        Map("Agate"     -> (2 * matcherFee - LimitOrder(ord1).getReceiveAmount - LimitOrder(ord2).getReceiveAmount),
             ass1.base58 -> ord1.amount,
             ass2.base58 -> ord2.amount))
   }

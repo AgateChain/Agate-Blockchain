@@ -48,7 +48,7 @@ class OrderHistoryActor(db: DB, val settings: MatcherSettings, val utxPool: UtxP
     case GetTradableBalance(assetPair, addr, _) =>
       sender() ! getPairTradableBalance(assetPair, addr)
     case GetActiveOrdersByAddress(requestId, addr, assets, _) =>
-      // Because all orders spend waves for fee
+      // Because all orders spend Agate for fee
       val wasAssetChanged: Option[AssetId] => Boolean = if (assets.contains(None)) { _ =>
         true
       } else assets.contains

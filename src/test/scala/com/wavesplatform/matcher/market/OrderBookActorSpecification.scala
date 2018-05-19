@@ -43,7 +43,7 @@ class OrderBookActorSpecification
 
   var eventsProbe = TestProbe()
 
-  val pair                   = AssetPair(Some(ByteStr("BTC".getBytes)), Some(ByteStr("WAVES".getBytes)))
+  val pair                   = AssetPair(Some(ByteStr("BTC".getBytes)), Some(ByteStr("Agate".getBytes)))
   val blockchain: Blockchain = stub[Blockchain]
   val hugeAmount             = Long.MaxValue / 2
   (blockchain.portfolio _)
@@ -53,7 +53,7 @@ class OrderBookActorSpecification
                 LeaseBalance.empty,
                 Map(
                   ByteStr("BTC".getBytes)   -> hugeAmount,
-                  ByteStr("WAVES".getBytes) -> hugeAmount
+                  ByteStr("Agate".getBytes) -> hugeAmount
                 )))
   val issueTransaction: IssueTransactionV1 = IssueTransactionV1
     .selfSigned(PrivateKeyAccount("123".getBytes), "MinerReward".getBytes, Array.empty, 10000000000L, 8.toByte, true, 100000L, 10000L)

@@ -13,7 +13,7 @@ class LeaseStatusTestSuite extends BaseTransactionSuite with CancelAfterFailure 
 
   override protected def nodeConfigs: Seq[Config] = Configs
 
-  private val transferFee   = 0.001.waves
+  private val transferFee   = 0.001.Agate
   private val leasingAmount = 10.Agate
 
   test("verification of leasing status") {
