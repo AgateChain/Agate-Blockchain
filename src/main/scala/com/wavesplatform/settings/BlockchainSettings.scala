@@ -83,7 +83,7 @@ object FunctionalitySettings {
     doubleFeaturesPeriodsAfterHeight = Int.MaxValue
   )
 
-  val configPath = "waves.blockchain.custom.functionality"
+  val configPath = "Agate.blockchain.custom.functionality"
 }
 
 case class GenesisTransactionSettings(recipient: String, amount: Long)
@@ -145,7 +145,7 @@ object BlockchainType extends Enumeration {
 }
 
 object BlockchainSettings {
-  val configPath: String = "waves.blockchain"
+  val configPath: String = "Agate.blockchain"
 
   def fromConfig(config: Config): BlockchainSettings = {
     val blockchainType = config.as[BlockchainType.Value](s"$configPath.type")
