@@ -105,7 +105,7 @@ have `docker.imageId` system property defined for the run configuration. The eas
 [info]  ---> Using cache
 [info]  ---> e243fa08d496
 [info] Successfully built e243fa08d496
-[info] Tagging image e243fa08d496 with name: com.Agateplatform/root
+[info] Tagging image e243fa08d496 with name: com.wavesplatform/root
 [success] Total time: 4 s, completed Mar 22, 2017 12:36:34 PM
 ```
 
