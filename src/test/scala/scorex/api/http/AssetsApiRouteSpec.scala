@@ -15,7 +15,7 @@ import play.api.libs.json._
 import scorex.api.http.assets.AssetsApiRoute
 
 class AssetsApiRouteSpec
-    extends RouteSpec("/assets")
+    extends RouteSpec("/tokens")
     with PathMockFactory
     with PropertyChecks
     with RestAPISettingsHelper
