@@ -99,7 +99,7 @@ object Sponsorship {
       .getOrElse(Int.MaxValue)
 
   def toWaves(assetFee: Long, sponsorship: Long): Long = {
-    val waves = (BigDecimal(assetFee) * BigDecimal(Sponsorship.FeeUnit)) / BigDecimal(sponsorship)
+    val Agate = (BigDecimal(assetFee) * BigDecimal(Sponsorship.FeeUnit)) / BigDecimal(sponsorship)
     if (Agate > Long.MaxValue) {
       throw new java.lang.ArithmeticException("Overflow")
     }
