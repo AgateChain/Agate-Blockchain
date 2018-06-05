@@ -25,15 +25,15 @@ import scorex.wallet.Wallet
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
-@Path("/assets")
-@Api(value = "assets")
+@Path("/tokens")
+@Api(value = "tokens")
 case class AssetsApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPool, allChannels: ChannelGroup, blockchain: Blockchain, time: Time)
     extends ApiRoute
     with BroadcastRoute {
   val MaxAddressesPerRequest = 1000
 
   override lazy val route =
-    pathPrefix("assets") {
+    pathPrefix("tokens") {
       balance ~ balances ~ issue ~ reissue ~ burnRoute ~ transfer ~ massTransfer ~ signOrder ~ balanceDistribution ~ details ~ sponsorRoute
     }
 
@@ -67,7 +67,7 @@ case class AssetsApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPoo
     }
 
   @Path("/balance/{address}")
-  @ApiOperation(value = "Account's balance", notes = "Account's balances for all assets", httpMethod = "GET")
+  @ApiOperation(value = "Account's balance", notes = "Account's balances for all tokens", httpMethod = "GET")
   @ApiImplicitParams(
     Array(
       new ApiImplicitParam(name = "address", value = "Address", required = true, dataType = "string", paramType = "path")
@@ -121,7 +121,7 @@ case class AssetsApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPoo
 
   @Path("/masstransfer")
   @ApiOperation(value = "Mass Transfer",
-                notes = "Mass transfer of assets",
+                notes = "Mass transfer of tokens",
                 httpMethod = "POST",
                 produces = "application/json",
                 consumes = "application/json")
@@ -175,7 +175,7 @@ case class AssetsApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPoo
 
   @Path("/burn")
   @ApiOperation(value = "Burn Asset",
-                notes = "Burn some of your assets",
+                notes = "Burn some of your tokens",
                 httpMethod = "POST",
                 produces = "application/json",
                 consumes = "application/json")
