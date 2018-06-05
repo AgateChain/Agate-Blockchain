@@ -17,7 +17,7 @@ import scorex.transaction.Transaction
 import scorex.transaction.transfer._
 import scorex.wallet.Wallet
 
-class AssetsRouteSpec extends RouteSpec("/assets") with RequestGen with PathMockFactory with Eventually {
+class AssetsRouteSpec extends RouteSpec("/tokens") with RequestGen with PathMockFactory with Eventually {
 
   private val settings    = RestAPISettings.fromConfig(ConfigFactory.load())
   private val wallet      = stub[Wallet]
@@ -42,8 +42,8 @@ class AssetsRouteSpec extends RouteSpec("/assets") with RequestGen with PathMock
       val req = TransferV1Request(
         assetId = None,
         feeAssetId = None,
-        amount = 1 * Waves,
-        fee = Waves / 3,
+        amount = 1 * Agate,
+        fee = Agate / 3,
         sender = senderPrivateKey.address,
         attachment = Some("attachment"),
         recipient = receiverPrivateKey.address,
@@ -60,9 +60,9 @@ class AssetsRouteSpec extends RouteSpec("/assets") with RequestGen with PathMock
       val req = TransferV2Request(
         version = 2,
         assetId = None,
-        amount = 1 * Waves,
+        amount = 1 * Agate,
         feeAssetId = None,
-        fee = Waves / 3,
+        fee = Agate / 3,
         sender = senderPrivateKey.address,
         attachment = None,
         recipient = receiverPrivateKey.address,

@@ -234,10 +234,10 @@ class MatcherActorSpecification
 
       val now = NTP.correctedTime()
       val json =
-        GetMarketsResponse(Array(), Seq(MarketData(pair1, a1Name, waves, now, None, None), MarketData(pair2, a1Name, a2Name, now, None, None))).json
+        GetMarketsResponse(Array(), Seq(MarketData(pair1, a1Name, Agate, now, None, None), MarketData(pair2, a1Name, a2Name, now, None, None))).json
 
       ((json \ "markets")(0) \ "priceAsset").as[String] shouldBe AssetPair.WavesName
-      ((json \ "markets")(0) \ "priceAssetName").as[String] shouldBe waves
+      ((json \ "markets")(0) \ "priceAssetName").as[String] shouldBe Agate
       ((json \ "markets")(0) \ "amountAsset").as[String] shouldBe a1.get.base58
       ((json \ "markets")(0) \ "amountAssetName").as[String] shouldBe a1Name
       ((json \ "markets")(0) \ "created").as[Long] shouldBe now

@@ -24,8 +24,8 @@ case class PaymentApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPo
 
   @Deprecated
   @ApiOperation(
-    value = "Send payment. Deprecated: use /assets/transfer instead",
-    notes = "Send payment to another wallet. Deprecated: use /assets/transfer instead",
+    value = "Send payment. Deprecated: use /tokens/transfer instead",
+    notes = "Send payment to another wallet. Deprecated: use /tokens/transfer instead",
     httpMethod = "POST",
     produces = "application/json",
     consumes = "application/json"

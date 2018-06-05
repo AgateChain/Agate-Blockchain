@@ -54,7 +54,7 @@ case class DebugApiRoute(ws: WavesSettings,
 
   private lazy val configStr             = configRoot.render(ConfigRenderOptions.concise().setJson(true).setFormatted(true))
   private lazy val fullConfig: JsValue   = Json.parse(configStr)
-  private lazy val wavesConfig: JsObject = Json.obj("waves" -> (fullConfig \ "waves").get)
+  private lazy val wavesConfig: JsObject = Json.obj("Agate" -> (fullConfig \ "Agate").get)
 
   override val settings = ws.restAPISettings
   override lazy val route: Route = pathPrefix("debug") {
@@ -143,13 +143,13 @@ case class DebugApiRoute(ws: WavesSettings,
     complete(ng.wavesDistribution(ng.height).map { case (a, b) => a.stringRepr -> b })
   }
 
-  @Path("/stateWaves/{height}")
+  @Path("/stateAgate/{height}")
   @ApiOperation(value = "State at block", notes = "Get state at specified height", httpMethod = "GET")
   @ApiImplicitParams(
     Array(
       new ApiImplicitParam(name = "height", value = "height", required = true, dataType = "integer", paramType = "path")
     ))
-  def stateWaves: Route = (path("stateWaves" / IntNumber) & get & withAuth) { height =>
+  def stateWaves: Route = (path("stateAgate" / IntNumber) & get & withAuth) { height =>
     complete(ng.wavesDistribution(height).map { case (a, b) => a.stringRepr -> b })
   }
 

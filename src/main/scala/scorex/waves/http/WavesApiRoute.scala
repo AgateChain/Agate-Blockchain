@@ -28,8 +28,8 @@ case class WavesApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPool
   @Deprecated
   @Path("/payment")
   @ApiOperation(
-    value = "Send payment from wallet. Deprecated: use /assets/transfer instead",
-    notes = "Send payment from wallet to another wallet. Each call sends new payment. Deprecated: use /assets/transfer instead",
+    value = "Send payment from wallet. Deprecated: use /tokens/transfer instead",
+    notes = "Send payment from wallet to another wallet. Each call sends new payment. Deprecated: use /tokens/transfer instead",
     httpMethod = "POST",
     produces = "application/json",
     consumes = "application/json"

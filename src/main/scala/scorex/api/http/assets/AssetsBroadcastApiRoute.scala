@@ -16,11 +16,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Left, Right}
 
-@Path("/assets/broadcast")
-@Api(value = "assets")
+@Path("/tokens/broadcast")
+@Api(value = "tokens")
 case class AssetsBroadcastApiRoute(settings: RestAPISettings, utx: UtxPool, allChannels: ChannelGroup) extends ApiRoute with BroadcastRoute {
 
-  override val route: Route = pathPrefix("assets" / "broadcast") {
+  override val route: Route = pathPrefix("tokens" / "broadcast") {
     issue ~ reissue ~ transfer ~ burnRoute ~ batchTransfer ~ exchange
   }
 
@@ -104,7 +104,7 @@ case class AssetsBroadcastApiRoute(settings: RestAPISettings, utx: UtxPool, allC
 
   @Path("/batch-transfer")
   @ApiOperation(value = "Batch transfer operation",
-                notes = "Transfer assets to new addresses",
+                notes = "Transfer tokens to new addresses",
                 httpMethod = "POST",
                 produces = "application/json",
                 consumes = "application/json")

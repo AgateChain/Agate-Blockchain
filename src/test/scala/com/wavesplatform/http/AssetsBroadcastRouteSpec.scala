@@ -23,7 +23,7 @@ import scorex.transaction.{Proofs, Transaction, ValidationError}
 import scorex.wallet.Wallet
 import shapeless.Coproduct
 
-class AssetsBroadcastRouteSpec extends RouteSpec("/assets/broadcast/") with RequestGen with PathMockFactory with PropertyChecks {
+class AssetsBroadcastRouteSpec extends RouteSpec("/tokens/broadcast/") with RequestGen with PathMockFactory with PropertyChecks {
   private val settings    = RestAPISettings.fromConfig(ConfigFactory.load())
   private val utx         = stub[UtxPool]
   private val allChannels = stub[ChannelGroup]
@@ -70,7 +70,7 @@ class AssetsBroadcastRouteSpec extends RouteSpec("/assets/broadcast/") with Requ
         posting(ir.copy(fee = q)) should produce(InsufficientFee())
       }
       forAll(nonPositiveLong) { q =>
-        posting(ir.copy(quantity = q)) should produce(NegativeAmount(s"$q of assets"))
+        posting(ir.copy(quantity = q)) should produce(NegativeAmount(s"$q of tokens"))
       }
       forAll(invalidDecimals) { d =>
         posting(ir.copy(decimals = d)) should produce(TooBigArrayAllocation)
@@ -94,7 +94,7 @@ class AssetsBroadcastRouteSpec extends RouteSpec("/assets/broadcast/") with Requ
 
       // todo: invalid sender
       forAll(nonPositiveLong) { q =>
-        posting(rr.copy(quantity = q)) should produce(NegativeAmount(s"$q of assets"))
+        posting(rr.copy(quantity = q)) should produce(NegativeAmount(s"$q of tokens"))
       }
       forAll(nonPositiveLong) { fee =>
         posting(rr.copy(fee = fee)) should produce(InsufficientFee())
@@ -108,7 +108,7 @@ class AssetsBroadcastRouteSpec extends RouteSpec("/assets/broadcast/") with Requ
         posting(br.copy(senderPublicKey = pk)) should produce(InvalidAddress)
       }
       forAll(nonPositiveLong) { q =>
-        posting(br.copy(quantity = q)) should produce(NegativeAmount(s"$q of assets"))
+        posting(br.copy(quantity = q)) should produce(NegativeAmount(s"$q of tokens"))
       }
       forAll(nonPositiveLong) { fee =>
         posting(br.copy(fee = fee)) should produce(InsufficientFee())
@@ -168,10 +168,10 @@ class AssetsBroadcastRouteSpec extends RouteSpec("/assets/broadcast/") with Requ
           assetId = None,
           sender = senderPrivateKey,
           recipient = receiverPrivateKey.toAddress,
-          amount = 1 * Waves,
+          amount = 1 * Agate,
           timestamp = System.currentTimeMillis(),
           feeAssetId = None,
-          feeAmount = Waves / 3,
+          feeAmount = Agate / 3,
           attachment = Array.emptyByteArray
         )
         .right
@@ -184,10 +184,10 @@ class AssetsBroadcastRouteSpec extends RouteSpec("/assets/broadcast/") with Requ
           assetId = None,
           sender = senderPrivateKey,
           recipient = receiverPrivateKey.toAddress,
-          amount = 1 * Waves,
+          amount = 1 * Agate,
           timestamp = System.currentTimeMillis(),
           feeAssetId = None,
-          feeAmount = Waves / 3,
+          feeAmount = Agate / 3,
           attachment = Array.emptyByteArray,
           version = 2,
           proofs = Proofs(Seq.empty)

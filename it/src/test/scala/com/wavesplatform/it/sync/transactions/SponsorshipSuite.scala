@@ -11,7 +11,7 @@ import play.api.libs.json.{JsNumber, JsValue, Json}
 
 class SponsorshipSuite extends FreeSpec with NodesFromDocker with Matchers with ReportingTestName with CancelAfterFailure {
 
-  val Waves       = 100000000L
+  val Agate       = 100000000L
   val Token       = 100L
   val TinyFee     = Token / 2
   val SmallFee    = Token + Token / 2
@@ -39,7 +39,7 @@ class SponsorshipSuite extends FreeSpec with NodesFromDocker with Matchers with 
   }
 
   def assertSponsorship(assetId: String, sponsorship: Long) = {
-    val response = miner.get(s"/assets/details/$assetId")
+    val response = miner.get(s"/tokens/details/$assetId")
     val jsv      = Json.parse(response.getResponseBody)
     assert((jsv \ "minSponsoredAssetFee").asOpt[Long] == Some(sponsorship).filter(_ != 0))
   }
@@ -66,7 +66,7 @@ class SponsorshipSuite extends FreeSpec with NodesFromDocker with Matchers with 
     val transferTxToAlice = sponsor.transfer(sponsor.address, alice.address, sponsorAssetTotal / 2, minWavesFee, Some(sponsorAssetId), None).id
     nodes.waitForHeightAriseAndTxPresent(transferTxToAlice)
 
-    val sponsorId = sponsor.sponsorAsset(sponsor.address, sponsorAssetId, baseFee = Token, fee = 1 * Waves).id
+    val sponsorId = sponsor.sponsorAsset(sponsor.address, sponsorAssetId, baseFee = Token, fee = 1 * Agate).id
     nodes.waitForHeightAriseAndTxPresent(sponsorId)
 
     "check before test accounts balances" in {
@@ -118,7 +118,7 @@ class SponsorshipSuite extends FreeSpec with NodesFromDocker with Matchers with 
       miner.assertBalances(miner.address, minerWavesBalanceAfterFirstXferTest + Sponsorship.FeeUnit * LargeFee / Token)
     }
 
-    "cancel sponsorship, cannot pay fees in non sponsored assets " in {
+    "cancel sponsorship, cannot pay fees in non sponsored tokens " in {
       val cancelSponsorshipTxId = sponsor.cancelSponsorship(sponsor.address, sponsorAssetId, fee = 1.Agate).id
       nodes.waitForHeightAriseAndTxPresent(cancelSponsorshipTxId)
       assert(!cancelSponsorshipTxId.isEmpty)

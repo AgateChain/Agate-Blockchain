@@ -82,7 +82,7 @@ class MatcherTestSuite
     // Alice places sell order
     val (id, status) =
       matcherPlaceOrder(matcherNode,
-                        prepareOrder(aliceNode, matcherNode, aliceWavesPair, OrderType.SELL, 2 * Waves * Order.PriceConstant, aliceSellAmount))
+                        prepareOrder(aliceNode, matcherNode, aliceWavesPair, OrderType.SELL, 2 * Agate * Order.PriceConstant, aliceSellAmount))
     status shouldBe "OrderAccepted"
     aliceSell1 = id
     // Alice checks that the order in order book
@@ -91,7 +91,7 @@ class MatcherTestSuite
     // Alice check that order is correct
     val orders = matcherGetOrderBook(matcherNode, aliceAsset)
     orders.asks.head.amount shouldBe aliceSellAmount
-    orders.asks.head.price shouldBe 2 * Waves * Order.PriceConstant
+    orders.asks.head.price shouldBe 2 * Agate * Order.PriceConstant
   }
 
   "frozen amount should be listed via matcherBalance REST endpoint" in {
@@ -110,7 +110,7 @@ class MatcherTestSuite
   "and should match with buy order" in {
     // Bob places a buy order
     val (id, status) =
-      matcherPlaceOrder(matcherNode, prepareOrder(bobNode, matcherNode, aliceWavesPair, OrderType.BUY, 2 * Waves * Order.PriceConstant, 200))
+      matcherPlaceOrder(matcherNode, prepareOrder(bobNode, matcherNode, aliceWavesPair, OrderType.BUY, 2 * Agate * Order.PriceConstant, 200))
     bobBuy1 = id
     status shouldBe "OrderAccepted"
 
@@ -125,19 +125,19 @@ class MatcherTestSuite
     // Alice checks that part of her order still in the order book
     val orders = matcherGetOrderBook(matcherNode, aliceAsset)
     orders.asks.head.amount shouldBe 300
-    orders.asks.head.price shouldBe 2 * Waves * Order.PriceConstant
+    orders.asks.head.price shouldBe 2 * Agate * Order.PriceConstant
 
     // Alice checks that she sold some assets
     waitForAssetBalance(aliceNode, aliceAsset, 800)
 
     // Bob checks that he spent some Agate
     val updatedBobBalance = getBalance(bobNode)
-    updatedBobBalance._1 shouldBe (bobBalance._1 - 2 * Waves * 200 - MatcherFee)
+    updatedBobBalance._1 shouldBe (bobBalance._1 - 2 * Agate * 200 - MatcherFee)
     bobBalance = updatedBobBalance
 
-    // Alice checks that she received some Waves
+    // Alice checks that she received some Agate
     val updatedAliceBalance = getBalance(aliceNode)
-    updatedAliceBalance._1 shouldBe (aliceBalance._1 + 2 * Waves * 200 - (MatcherFee * 200.0 / 500.0).toLong)
+    updatedAliceBalance._1 shouldBe (aliceBalance._1 + 2 * Agate * 200 - (MatcherFee * 200.0 / 500.0).toLong)
     aliceBalance = updatedAliceBalance
 
     // Matcher checks that it earn fees
@@ -155,23 +155,23 @@ class MatcherTestSuite
 
   "submitting sell orders should check availability of asset" in {
     // Bob trying to place order on more assets than he has - order rejected
-    val badOrder = prepareOrder(bobNode, matcherNode, aliceWavesPair, OrderType.SELL, (19.0 * Waves / 10.0 * Order.PriceConstant).toLong, 300)
+    val badOrder = prepareOrder(bobNode, matcherNode, aliceWavesPair, OrderType.SELL, (19.0 * Agate / 10.0 * Order.PriceConstant).toLong, 300)
     val error    = matcherExpectOrderPlacementRejected(badOrder, 400, "OrderRejected")
     error should be(true)
 
     // Bob places order on available amount of assets - order accepted
-    val goodOrder   = prepareOrder(bobNode, matcherNode, aliceWavesPair, OrderType.SELL, (19.0 * Waves / 10.0 * Order.PriceConstant).toLong, 150)
+    val goodOrder   = prepareOrder(bobNode, matcherNode, aliceWavesPair, OrderType.SELL, (19.0 * Agate / 10.0 * Order.PriceConstant).toLong, 150)
     val (_, status) = matcherPlaceOrder(matcherNode, goodOrder)
     status should be("OrderAccepted")
 
     // Bob checks that the order in the order book
     val orders = matcherGetOrderBook(matcherNode, aliceAsset)
-    orders.asks should contain(LevelResponse(19 * Waves / 10 * Order.PriceConstant, 150))
+    orders.asks should contain(LevelResponse(19 * Agate / 10 * Order.PriceConstant, 150))
   }
 
   "buy order should match on few price levels" in {
     // Alice places a buy order
-    val order        = prepareOrder(aliceNode, matcherNode, aliceWavesPair, OrderType.BUY, (21.0 * Waves / 10.0 * Order.PriceConstant).toLong, 350)
+    val order        = prepareOrder(aliceNode, matcherNode, aliceWavesPair, OrderType.BUY, (21.0 * Agate / 10.0 * Order.PriceConstant).toLong, 350)
     val (id, status) = matcherPlaceOrder(matcherNode, order)
     status should be("OrderAccepted")
 
@@ -188,12 +188,12 @@ class MatcherTestSuite
     matcherBalance = updatedMatcherBalance
 
     val updatedBobBalance = getBalance(bobNode)
-    updatedBobBalance._1 should be(bobBalance._1 - MatcherFee + 150 * (19.0 * Waves / 10.0).toLong)
+    updatedBobBalance._1 should be(bobBalance._1 - MatcherFee + 150 * (19.0 * Agate / 10.0).toLong)
     bobBalance = updatedBobBalance
 
     val updatedAliceBalance = getBalance(aliceNode)
     updatedAliceBalance._1 should be(
-      aliceBalance._1 - (MatcherFee * 200.0 / 350.0).toLong - (MatcherFee * 150.0 / 350.0).toLong - (MatcherFee * 200.0 / 500.0).toLong - (19.0 * Waves / 10.0).toLong * 150)
+      aliceBalance._1 - (MatcherFee * 200.0 / 350.0).toLong - (MatcherFee * 150.0 / 350.0).toLong - (MatcherFee * 200.0 / 500.0).toLong - (19.0 * Agate / 10.0).toLong * 150)
     aliceBalance = updatedAliceBalance
   }
 
@@ -208,18 +208,18 @@ class MatcherTestSuite
     orders1.bids.size should be(0)
 
     // Alice places a new sell order on 100
-    val order         = prepareOrder(aliceNode, matcherNode, aliceWavesPair, OrderType.SELL, 2 * Waves * Order.PriceConstant, 100)
+    val order         = prepareOrder(aliceNode, matcherNode, aliceWavesPair, OrderType.SELL, 2 * Agate * Order.PriceConstant, 100)
     val (id, status2) = matcherPlaceOrder(matcherNode, order)
     status2 should be("OrderAccepted")
 
     // Alice checks that the order is in the order book
     val orders2 = matcherGetOrderBook(matcherNode, aliceAsset)
-    orders2.asks should contain(LevelResponse(20 * Waves / 10 * Order.PriceConstant, 100))
+    orders2.asks should contain(LevelResponse(20 * Agate / 10 * Order.PriceConstant, 100))
   }
 
   "buy order should execute all open orders and put remaining in order book" in {
     // Bob places buy order on amount bigger then left in sell orders
-    val order        = prepareOrder(bobNode, matcherNode, aliceWavesPair, OrderType.BUY, 2 * Waves * Order.PriceConstant, 130)
+    val order        = prepareOrder(bobNode, matcherNode, aliceWavesPair, OrderType.BUY, 2 * Agate * Order.PriceConstant, 130)
     val (id, status) = matcherPlaceOrder(matcherNode, order)
     status should be("OrderAccepted")
 
@@ -228,7 +228,7 @@ class MatcherTestSuite
 
     // Check that remaining part of the order is in the order book
     val orders = matcherGetOrderBook(matcherNode, aliceAsset)
-    orders.bids should contain(LevelResponse(2 * Waves * Order.PriceConstant, 30))
+    orders.bids should contain(LevelResponse(2 * Agate * Order.PriceConstant, 30))
 
     // Check balances
     waitForAssetBalance(aliceNode, aliceAsset, 850)
@@ -239,11 +239,11 @@ class MatcherTestSuite
     matcherBalance = updatedMatcherBalance
 
     val updatedBobBalance = getBalance(bobNode)
-    updatedBobBalance._1 should be(bobBalance._1 - (MatcherFee * 100.0 / 130.0).toLong - 100 * 2 * Waves)
+    updatedBobBalance._1 should be(bobBalance._1 - (MatcherFee * 100.0 / 130.0).toLong - 100 * 2 * Agate)
     bobBalance = updatedBobBalance
 
     val updatedAliceBalance = getBalance(aliceNode)
-    updatedAliceBalance._1 should be(aliceBalance._1 - MatcherFee + 2 * Waves * 100)
+    updatedAliceBalance._1 should be(aliceBalance._1 - MatcherFee + 2 * Agate * 100)
     aliceBalance = updatedAliceBalance
   }
 
@@ -272,7 +272,7 @@ class MatcherTestSuite
       priceAsset = None
     )
 
-    def bobOrder = prepareOrder(bobNode, matcherNode, bobWavesPair, OrderType.SELL, 1 * Waves * Order.PriceConstant, bobAssetQuantity)
+    def bobOrder = prepareOrder(bobNode, matcherNode, bobWavesPair, OrderType.SELL, 1 * Agate * Order.PriceConstant, bobAssetQuantity)
 
     val (sellId, _) = matcherPlaceOrder(matcherNode, bobOrder)
     waitForOrderStatus(matcherNode, aliceAsset, sellId, "Accepted")
@@ -280,7 +280,7 @@ class MatcherTestSuite
     // Alice wants to buy all Bob's assets for 1 Wave
     val (buyId, _) =
       matcherPlaceOrder(matcherNode,
-                        prepareOrder(aliceNode, matcherNode, bobWavesPair, OrderType.BUY, 1 * Waves * Order.PriceConstant, bobAssetQuantity))
+                        prepareOrder(aliceNode, matcherNode, bobWavesPair, OrderType.BUY, 1 * Agate * Order.PriceConstant, bobAssetQuantity))
     waitForOrderStatus(matcherNode, aliceAsset, buyId, "Filled")
 
     // Bob tries to do the same operation, but at now he have no assets
@@ -308,12 +308,12 @@ class MatcherTestSuite
     waitForAssetBalance(aliceNode, bobAsset, 0)
 
     // Bob wants to sell all own assets for 1 Wave
-    def bobOrder = prepareOrder(bobNode, matcherNode, bobWavesPair, OrderType.SELL, 1 * Waves * Order.PriceConstant, bobAssetQuantity)
+    def bobOrder = prepareOrder(bobNode, matcherNode, bobWavesPair, OrderType.SELL, 1 * Agate * Order.PriceConstant, bobAssetQuantity)
 
     val (sellId, _) = matcherPlaceOrder(matcherNode, bobOrder)
     waitForOrderStatus(matcherNode, bobAsset, sellId, "Accepted")
 
-    // Bob moves all waves to Alice
+    // Bob moves all Agate to Alice
     val bobBalance     = Await.result(matcherNode.balance(bobNode.address), 1.minute).balance
     val transferAmount = bobBalance - TransactionFee
     transfer(bobNode, aliceNode, None, transferAmount, wait = true)
@@ -457,7 +457,7 @@ class MatcherTestSuite
       "leased Agate, insufficient Agate" in {
         val bobBalance = Await.result(matcherNode.balance(bobNode.address), 1.minute).balance
 
-        val price   = 1 * Waves
+        val price   = 1 * Agate
         val orderId = bobPlacesWavesOrder(price * Order.PriceConstant, 1)
 
         val leaseAmount = bobBalance - TransactionFee - price / 2
@@ -642,7 +642,7 @@ object MatcherTestSuite {
   private val AssetQuantity    = 1000
   private val MatcherFee       = 300000
   private val TransactionFee   = 300000
-  private val Waves            = 100000000L
+  private val Agate            = 100000000L
 
   private val minerDisabled = parseString("Agate.miner.enable = no")
   private val matcherConfig = parseString(s"""

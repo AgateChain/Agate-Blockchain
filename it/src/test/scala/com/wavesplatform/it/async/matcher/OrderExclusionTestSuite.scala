@@ -56,7 +56,7 @@ class OrderExclusionTestSuite
     // Alice places sell order
     val (id, status) =
       matcherPlaceOrder(matcherNode,
-                        prepareOrder(aliceNode, matcherNode, aliceWavesPair, OrderType.SELL, 2 * Waves * Order.PriceConstant, 500, 70.seconds))
+                        prepareOrder(aliceNode, matcherNode, aliceWavesPair, OrderType.SELL, 2 * Agate * Order.PriceConstant, 500, 70.seconds))
     status shouldBe "OrderAccepted"
     aliceSell1 = id
     // Alice checks that the order in order book
@@ -67,7 +67,7 @@ class OrderExclusionTestSuite
     // Alice check that order is correct
     val orders = matcherGetOrderBook(matcherNode, aliceAsset)
     orders.asks.head.amount shouldBe 500
-    orders.asks.head.price shouldBe 2 * Waves * Order.PriceConstant
+    orders.asks.head.price shouldBe 2 * Agate * Order.PriceConstant
   }
 
   "sell order should be in the aliceNode orderbook" in {
@@ -127,7 +127,7 @@ object OrderExclusionTestSuite {
   val MatcherFee: Long     = 300000
   val TransactionFee: Long = 300000
 
-  val Waves: Long = 100000000L
+  val Agate: Long = 100000000L
 
   val Configs: Seq[Config] = Seq(matcherConfig.withFallback(Default.head)) ++
     Random.shuffle(Default.tail.init).take(2).map(nonGeneratingPeersConfig.withFallback(_)) ++
