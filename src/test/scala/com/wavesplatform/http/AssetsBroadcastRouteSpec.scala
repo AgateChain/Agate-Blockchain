@@ -70,7 +70,7 @@ class AssetsBroadcastRouteSpec extends RouteSpec("/tokens/broadcast/") with Requ
         posting(ir.copy(fee = q)) should produce(InsufficientFee())
       }
       forAll(nonPositiveLong) { q =>
-        posting(ir.copy(quantity = q)) should produce(NegativeAmount(s"$q of tokens"))
+        posting(ir.copy(quantity = q)) should produce(NegativeAmount(s"$q of assets"))
       }
       forAll(invalidDecimals) { d =>
         posting(ir.copy(decimals = d)) should produce(TooBigArrayAllocation)
