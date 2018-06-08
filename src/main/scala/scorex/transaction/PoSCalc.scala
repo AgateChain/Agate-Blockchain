@@ -14,8 +14,8 @@ import scala.concurrent.duration.FiniteDuration
 
 object PoSCalc extends ScorexLogging {
 
-  val MinimalEffectiveBalanceForGenerator1: Long = 1000000000000L
-  val MinimalEffectiveBalanceForGenerator2: Long = 100000000000L
+  val MinimalEffectiveBalanceForGenerator1: Long = 8000000000000L
+  val MinimalEffectiveBalanceForGenerator2: Long = 5000000000000L
 
   private val AvgBlockTimeDepth: Int = 3
 

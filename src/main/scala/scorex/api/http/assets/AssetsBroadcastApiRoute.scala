@@ -26,8 +26,8 @@ case class AssetsBroadcastApiRoute(settings: RestAPISettings, utx: UtxPool, allC
 
   @Path("/issue")
   @ApiOperation(
-    value = "Broadcast signed Asset issue",
-    notes = "Publish signed Asset issue transaction to the Blockchain",
+    value = "Broadcast signed token issue",
+    notes = "Publish signed token issue transaction to the Blockchain",
     httpMethod = "POST",
     consumes = "application/json",
     produces = "application/json"
@@ -41,7 +41,7 @@ case class AssetsBroadcastApiRoute(settings: RestAPISettings, utx: UtxPool, allC
                            dataType = "scorex.api.http.assets.SignedIssueV1Request")))
   @ApiResponses(
     Array(
-      new ApiResponse(code = 200, message = "Json with signed Asset issue transaction contained Asset ID"),
+      new ApiResponse(code = 200, message = "Json with signed token issue transaction contained token ID"),
       new ApiResponse(code = 400, message = "Json with error description", response = classOf[ApiErrorResponse])
     ))
   def issue: Route = (path("issue") & post) {
@@ -52,8 +52,8 @@ case class AssetsBroadcastApiRoute(settings: RestAPISettings, utx: UtxPool, allC
 
   @Path("/reissue")
   @ApiOperation(
-    value = "Broadcast signed Asset reissue",
-    notes = "Publish signed Asset reissue transaction to the Blockchain",
+    value = "Broadcast signed token reissue",
+    notes = "Publish signed token reissue transaction to the Blockchain",
     httpMethod = "POST",
     consumes = "application/json",
     produces = "application/json"
@@ -67,7 +67,7 @@ case class AssetsBroadcastApiRoute(settings: RestAPISettings, utx: UtxPool, allC
                            dataType = "scorex.api.http.assets.SignedReissueV1Request")))
   @ApiResponses(
     Array(
-      new ApiResponse(code = 200, message = "Json with signed Asset reissue transaction"),
+      new ApiResponse(code = 200, message = "Json with signed token reissue transaction"),
       new ApiResponse(code = 400, message = "Json with error description", response = classOf[ApiErrorResponse])
     ))
   def reissue: Route = (path("reissue") & post) {
@@ -78,8 +78,8 @@ case class AssetsBroadcastApiRoute(settings: RestAPISettings, utx: UtxPool, allC
 
   @Path("/burn")
   @ApiOperation(
-    value = "Broadcast signed Asset burn transaction",
-    notes = "Publish signed Asset burn transaction to the Blockchain",
+    value = "Broadcast signed token burn transaction",
+    notes = "Publish signed token burn transaction to the Blockchain",
     httpMethod = "POST",
     consumes = "application/json",
     produces = "application/json"
@@ -93,7 +93,7 @@ case class AssetsBroadcastApiRoute(settings: RestAPISettings, utx: UtxPool, allC
                            dataType = "scorex.api.http.assets.SignedBurnV1Request")))
   @ApiResponses(
     Array(
-      new ApiResponse(code = 200, message = "Json with signed Asset burn transaction"),
+      new ApiResponse(code = 200, message = "Json with signed token burn transaction"),
       new ApiResponse(code = 400, message = "Json with error description", response = classOf[ApiErrorResponse])
     ))
   def burnRoute: Route = (path("burn") & post) {
@@ -167,8 +167,8 @@ case class AssetsBroadcastApiRoute(settings: RestAPISettings, utx: UtxPool, allC
 
   @Path("/transfer")
   @ApiOperation(
-    value = "Broadcast signed Asset transfer",
-    notes = "Publish signed Asset transfer transaction to the Blockchain",
+    value = "Broadcast signed token transfer",
+    notes = "Publish signed token transfer transaction to the Blockchain",
     httpMethod = "POST",
     consumes = "application/json",
     produces = "application/json"
@@ -182,7 +182,7 @@ case class AssetsBroadcastApiRoute(settings: RestAPISettings, utx: UtxPool, allC
                            dataType = "scorex.api.http.assets.SignedTransferV2Request")))
   @ApiResponses(
     Array(
-      new ApiResponse(code = 200, message = "Json with signed Asset transfer transaction"),
+      new ApiResponse(code = 200, message = "Json with signed token transfer transaction"),
       new ApiResponse(code = 400, message = "Json with error description", response = classOf[ApiErrorResponse])
     ))
   def transfer: Route = (path("transfer") & post) {
@@ -227,8 +227,8 @@ case class AssetsBroadcastApiRoute(settings: RestAPISettings, utx: UtxPool, allC
 
   @Path("/sponsor")
   @ApiOperation(
-    value = "Broadcast signed Sponsor Asset Fee",
-    notes = "Publish signed Sponsor Asset Fee transaction to the Blockchain",
+    value = "Broadcast signed Sponsor token Fee",
+    notes = "Publish signed Sponsor token Fee transaction to the Blockchain",
     httpMethod = "POST",
     consumes = "application/json",
     produces = "application/json"
