@@ -94,7 +94,7 @@ class AssetsBroadcastRouteSpec extends RouteSpec("/tokens/broadcast/") with Requ
 
       // todo: invalid sender
       forAll(nonPositiveLong) { q =>
-        posting(rr.copy(quantity = q)) should produce(NegativeAmount(s"$q of tokens"))
+        posting(rr.copy(quantity = q)) should produce(NegativeAmount(s"$q of assets"))
       }
       forAll(nonPositiveLong) { fee =>
         posting(rr.copy(fee = fee)) should produce(InsufficientFee())
@@ -108,7 +108,7 @@ class AssetsBroadcastRouteSpec extends RouteSpec("/tokens/broadcast/") with Requ
         posting(br.copy(senderPublicKey = pk)) should produce(InvalidAddress)
       }
       forAll(nonPositiveLong) { q =>
-        posting(br.copy(quantity = q)) should produce(NegativeAmount(s"$q of tokens"))
+        posting(br.copy(quantity = q)) should produce(NegativeAmount(s"$q of assets"))
       }
       forAll(nonPositiveLong) { fee =>
         posting(br.copy(fee = fee)) should produce(InsufficientFee())
