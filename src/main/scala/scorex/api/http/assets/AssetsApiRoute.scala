@@ -38,7 +38,7 @@ case class AssetsApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPoo
     }
 
   @Path("/balance/{address}/{assetId}")
-  @ApiOperation(value = "Asset's balance", notes = "Account's balance by given asset", httpMethod = "GET")
+  @ApiOperation(value = "token's balance", notes = "Account's balance by given token", httpMethod = "GET")
   @ApiImplicitParams(
     Array(
       new ApiImplicitParam(name = "address", value = "Address", required = true, dataType = "string", paramType = "path"),
@@ -50,7 +50,7 @@ case class AssetsApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPoo
     }
 
   @Path("/{assetId}/distribution")
-  @ApiOperation(value = "Asset balance distribution", notes = "Asset balance distribution by account", httpMethod = "GET")
+  @ApiOperation(value = "token balance distribution", notes = "token balance distribution by account", httpMethod = "GET")
   @ApiImplicitParams(
     Array(
       new ApiImplicitParam(name = "assetId", value = "Asset ID", required = true, dataType = "string", paramType = "path")
@@ -78,7 +78,7 @@ case class AssetsApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPoo
     }
 
   @Path("/details/{assetId}")
-  @ApiOperation(value = "Information about an asset", notes = "Provides detailed information about given asset", httpMethod = "GET")
+  @ApiOperation(value = "Information about an token", notes = "Provides detailed information about given token", httpMethod = "GET")
   @ApiImplicitParams(
     Array(
       new ApiImplicitParam(name = "assetId", value = "ID of the asset", required = true, dataType = "string", paramType = "path")
@@ -89,8 +89,8 @@ case class AssetsApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPoo
     }
 
   @Path("/transfer")
-  @ApiOperation(value = "Transfer asset",
-                notes = "Transfer asset to new address",
+  @ApiOperation(value = "Transfer token",
+                notes = "Transfer token to new address",
                 httpMethod = "POST",
                 produces = "application/json",
                 consumes = "application/json")
@@ -141,7 +141,7 @@ case class AssetsApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPoo
     processRequest("masstransfer", (t: MassTransferRequest) => doBroadcast(TransactionFactory.massTransferAsset(t, wallet, time)))
 
   @Path("/issue")
-  @ApiOperation(value = "Issue Asset", notes = "Issue new Asset", httpMethod = "POST", produces = "application/json", consumes = "application/json")
+  @ApiOperation(value = "Issue token", notes = "Issue new token", httpMethod = "POST", produces = "application/json", consumes = "application/json")
   @ApiImplicitParams(
     Array(
       new ApiImplicitParam(
@@ -158,7 +158,7 @@ case class AssetsApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPoo
     processRequest("issue", (r: IssueV1Request) => doBroadcast(TransactionFactory.issueAssetV1(r, wallet, time)))
 
   @Path("/reissue")
-  @ApiOperation(value = "Issue Asset", notes = "Reissue Asset", httpMethod = "POST", produces = "application/json", consumes = "application/json")
+  @ApiOperation(value = "Issue token", notes = "Reissue token", httpMethod = "POST", produces = "application/json", consumes = "application/json")
   @ApiImplicitParams(
     Array(
       new ApiImplicitParam(
@@ -174,7 +174,7 @@ case class AssetsApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPoo
     processRequest("reissue", (r: ReissueV1Request) => doBroadcast(TransactionFactory.reissueAssetV1(r, wallet, time)))
 
   @Path("/burn")
-  @ApiOperation(value = "Burn Asset",
+  @ApiOperation(value = "Burn token",
                 notes = "Burn some of your tokens",
                 httpMethod = "POST",
                 produces = "application/json",
@@ -259,7 +259,7 @@ case class AssetsApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPoo
         case t: IssueTransaction => Some(t)
         case _                   => None
       }).toRight("No issue transaction found with given asset ID")
-      description <- blockchain.assetDescription(id).toRight("Failed to get description of the asset")
+      description <- blockchain.assetDescription(id).toRight("Failed to get description of the token")
       complexity  <- description.script.fold[Either[String, Long]](Right(0))(ScriptCompiler.estimate)
     } yield {
       JsObject(
@@ -286,7 +286,7 @@ case class AssetsApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPoo
     }).left.map(m => CustomValidationError(m))
 
   @Path("/sponsor")
-  @ApiOperation(value = "Sponsor an Asset", httpMethod = "POST", produces = "application/json", consumes = "application/json")
+  @ApiOperation(value = "Sponsor an token", httpMethod = "POST", produces = "application/json", consumes = "application/json")
   @ApiImplicitParams(
     Array(
       new ApiImplicitParam(
