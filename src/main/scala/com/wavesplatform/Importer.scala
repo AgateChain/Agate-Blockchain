@@ -4,21 +4,20 @@ import java.io._
 
 import com.google.common.primitives.Ints
 import com.typesafe.config.ConfigFactory
+import com.wavesplatform.account.{Address, AddressScheme}
+import com.wavesplatform.block.Block
+import com.wavesplatform.consensus.PoSSelector
 import com.wavesplatform.db.openDB
 import com.wavesplatform.history.{CheckpointServiceImpl, StorageFactory}
-import com.wavesplatform.mining.TwoDimensionalMiningConstraint
+import com.wavesplatform.mining.MultiDimensionalMiningConstraint
 import com.wavesplatform.settings.{WavesSettings, loadConfig}
 import com.wavesplatform.state.ByteStr
 import com.wavesplatform.state.appender.BlockAppender
+import com.wavesplatform.transaction.Transaction
 import com.wavesplatform.utils._
 import com.wavesplatform.utx.UtxPool
 import monix.execution.Scheduler
 import org.slf4j.bridge.SLF4JBridgeHandler
-import scorex.account.{Address, AddressScheme}
-import scorex.block.Block
-import scorex.transaction.Transaction
-import scorex.utils.{NTP, ScorexLogging}
-
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
@@ -38,15 +37,15 @@ object Importer extends ScorexLogging {
 
     implicit val scheduler: Scheduler = Scheduler.singleThread("appender")
     val utxPoolStub = new UtxPool {
-      override def putIfNew(tx: Transaction)                                                   = ???
-      override def removeAll(txs: Traversable[Transaction]): Unit                              = {}
-      override def accountPortfolio(addr: Address)                                             = ???
-      override def portfolio(addr: Address)                                                    = ???
-      override def all                                                                         = ???
-      override def size                                                                        = ???
-      override def transactionById(transactionId: ByteStr)                                     = ???
-      override def packUnconfirmed(rest: TwoDimensionalMiningConstraint, sortInBlock: Boolean) = ???
-      override def close(): Unit                                                               = {}
+      override def putIfNew(tx: Transaction)                                                     = ???
+      override def removeAll(txs: Traversable[Transaction]): Unit                                = {}
+      override def accountPortfolio(addr: Address)                                               = ???
+      override def portfolio(addr: Address)                                                      = ???
+      override def all                                                                           = ???
+      override def size                                                                          = ???
+      override def transactionById(transactionId: ByteStr)                                       = ???
+      override def packUnconfirmed(rest: MultiDimensionalMiningConstraint, sortInBlock: Boolean) = ???
+      override def close(): Unit                                                                 = {}
     }
 
     Try(args(1)) match {
@@ -55,10 +54,11 @@ object Importer extends ScorexLogging {
 
         createInputStream(filename) match {
           case Success(inputStream) =>
-            val db                = openDB(settings.dataDirectory, settings.levelDbCacheSize)
+            val db                = openDB(settings.dataDirectory)
             val blockchainUpdater = StorageFactory(settings, db, NTP)
+            val pos               = new PoSSelector(blockchainUpdater, settings.blockchainSettings)
             val checkpoint        = new CheckpointServiceImpl(db, settings.checkpointsSettings)
-            val extAppender       = BlockAppender(checkpoint, blockchainUpdater, NTP, utxPoolStub, settings, scheduler) _
+            val extAppender       = BlockAppender(checkpoint, blockchainUpdater, NTP, utxPoolStub, pos, settings, scheduler) _
             checkGenesis(settings, blockchainUpdater)
             val bis          = new BufferedInputStream(inputStream)
             var quit         = false

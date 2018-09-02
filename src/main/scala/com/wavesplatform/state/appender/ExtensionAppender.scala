@@ -1,20 +1,21 @@
 package com.wavesplatform.state.appender
 
+import com.wavesplatform.consensus.PoSSelector
 import com.wavesplatform.metrics.{BlockStats, Instrumented, Metrics}
 import com.wavesplatform.mining.Miner
 import com.wavesplatform.network.{InvalidBlockStorage, PeerDatabase, formatBlocks, id}
 import com.wavesplatform.settings.WavesSettings
 import com.wavesplatform.state._
+import com.wavesplatform.utils.{ScorexLogging, Time}
 import com.wavesplatform.utx.UtxPool
 import io.netty.channel.Channel
 import io.netty.channel.group.ChannelGroup
 import monix.eval.{Coeval, Task}
 import monix.execution.Scheduler
 import org.influxdb.dto.Point
-import scorex.block.Block
-import scorex.transaction.ValidationError.GenericError
-import scorex.transaction._
-import scorex.utils.{ScorexLogging, Time}
+import com.wavesplatform.block.Block
+import com.wavesplatform.transaction.ValidationError.GenericError
+import com.wavesplatform.transaction._
 
 import scala.util.{Left, Right}
 
@@ -23,6 +24,7 @@ object ExtensionAppender extends ScorexLogging with Instrumented {
   def apply(checkpoint: CheckpointService,
             blockchainUpdater: BlockchainUpdater with Blockchain,
             utxStorage: UtxPool,
+            pos: PoSSelector,
             time: Time,
             settings: WavesSettings,
             invalidBlocks: InvalidBlockStorage,
@@ -43,9 +45,10 @@ object ExtensionAppender extends ScorexLogging with Instrumented {
               val forkApplicationResultEi = Coeval {
                 extension.view
                   .map { b =>
-                    b -> appendBlock(checkpoint, blockchainUpdater, utxStorage, time, settings)(b).right.map {
-                      _.foreach(bh => BlockStats.applied(b, BlockStats.Source.Ext, bh))
-                    }
+                    b -> appendBlock(checkpoint, blockchainUpdater, utxStorage, pos, time, settings)(b).right
+                      .map {
+                        _.foreach(bh => BlockStats.applied(b, BlockStats.Source.Ext, bh))
+                      }
                   }
                   .zipWithIndex
                   .collectFirst { case ((b, Left(e)), i) => (i, b, e) }
@@ -68,7 +71,7 @@ object ExtensionAppender extends ScorexLogging with Instrumented {
                   }
               }
 
-              val initalHeight = blockchainUpdater.height
+              val initialHeight = blockchainUpdater.height
 
               val droppedBlocksEi = for {
                 commonBlockHeight <- blockchainUpdater.heightOf(lastCommonBlockId).toRight(GenericError("Fork contains no common parent"))
@@ -87,12 +90,12 @@ object ExtensionAppender extends ScorexLogging with Instrumented {
                       Left(e)
 
                     case Right(_) =>
-                      val depth = initalHeight - commonBlockHeight
+                      val depth = initialHeight - commonBlockHeight
                       if (depth > 0) {
                         Metrics.write(
                           Point
                             .measurement("rollback")
-                            .addField("depth", initalHeight - commonBlockHeight)
+                            .addField("depth", initialHeight - commonBlockHeight)
                             .addField("txs", droppedBlocks.size)
                         )
                       }

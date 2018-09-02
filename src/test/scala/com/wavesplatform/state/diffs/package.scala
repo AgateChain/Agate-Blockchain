@@ -1,20 +1,20 @@
 package com.wavesplatform.state
 
 import cats.Monoid
+import com.wavesplatform.block.Block
 import com.wavesplatform.db.WithState
-import com.wavesplatform.settings.FunctionalitySettings
+import com.wavesplatform.lagonaki.mocks.TestBlock
+import com.wavesplatform.mining.MiningConstraint
+import com.wavesplatform.settings.{FunctionalitySettings, TestFunctionalitySettings => TFS}
+import com.wavesplatform.transaction.{Transaction, ValidationError}
 import org.scalatest.Matchers
-import scorex.block.Block
-import scorex.lagonaki.mocks.TestBlock
-import scorex.settings.{TestFunctionalitySettings => TFS}
-import scorex.transaction.{Transaction, ValidationError}
 
 package object diffs extends WithState with Matchers {
   val ENOUGH_AMT: Long = Long.MaxValue / 3
 
   def assertDiffEi(preconditions: Seq[Block], block: Block, fs: FunctionalitySettings = TFS.Enabled)(
       assertion: Either[ValidationError, Diff] => Unit): Unit = withStateAndHistory(fs) { state =>
-    def differ(blockchain: Blockchain, b: Block) = BlockDiffer.fromBlock(fs, blockchain, None, b)
+    def differ(blockchain: Blockchain, b: Block) = BlockDiffer.fromBlock(fs, blockchain, None, b, MiningConstraint.Unlimited).map(_._1)
 
     preconditions.foreach { precondition =>
       val preconditionDiffEI = differ(state, precondition)
@@ -27,7 +27,7 @@ package object diffs extends WithState with Matchers {
 
   def assertDiffAndState(preconditions: Seq[Block], block: Block, fs: FunctionalitySettings = TFS.Enabled)(
       assertion: (Diff, Blockchain) => Unit): Unit = withStateAndHistory(fs) { state =>
-    def differ(blockchain: Blockchain, b: Block) = BlockDiffer.fromBlock(fs, blockchain, None, b)
+    def differ(blockchain: Blockchain, b: Block) = BlockDiffer.fromBlock(fs, blockchain, None, b, MiningConstraint.Unlimited).map(_._1)
 
     preconditions.foreach { precondition =>
       val preconditionDiff = differ(state, precondition).explicitGet()
@@ -38,9 +38,9 @@ package object diffs extends WithState with Matchers {
     assertion(totalDiff1, state)
   }
 
-  def assertDiffAndState(fs: FunctionalitySettings)(test: ((Seq[Transaction]) => Either[ValidationError, Unit]) => Unit): Unit =
+  def assertDiffAndState(fs: FunctionalitySettings)(test: (Seq[Transaction] => Either[ValidationError, Unit]) => Unit): Unit =
     withStateAndHistory(fs) { state =>
-      def differ(blockchain: Blockchain, b: Block) = BlockDiffer.fromBlock(fs, blockchain, None, b)
+      def differ(blockchain: Blockchain, b: Block) = BlockDiffer.fromBlock(fs, blockchain, None, b, MiningConstraint.Unlimited).map(_._1)
 
       test(txs => {
         val block = TestBlock.create(txs)
@@ -61,6 +61,6 @@ package object diffs extends WithState with Matchers {
   def produce(errorMessage: String): ProduceError = new ProduceError(errorMessage)
 
   def zipWithPrev[A](seq: Seq[A]): Seq[(Option[A], A)] = {
-    seq.zipWithIndex.map { case ((a, i)) => (if (i == 0) None else Some(seq(i - 1)), a) }
+    seq.zipWithIndex.map { case (a, i) => (if (i == 0) None else Some(seq(i - 1)), a) }
   }
 }

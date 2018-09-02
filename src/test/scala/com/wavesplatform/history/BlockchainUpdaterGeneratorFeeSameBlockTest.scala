@@ -1,13 +1,14 @@
 package com.wavesplatform.history
 
 import com.wavesplatform.TransactionGen
+import com.wavesplatform.features.BlockchainFeatures
 import com.wavesplatform.state._
 import com.wavesplatform.state.diffs._
 import org.scalacheck.Gen
 import org.scalatest._
 import org.scalatest.prop.PropertyChecks
-import scorex.transaction.GenesisTransaction
-import scorex.transaction.transfer._
+import com.wavesplatform.transaction.GenesisTransaction
+import com.wavesplatform.transaction.transfer._
 
 class BlockchainUpdaterGeneratorFeeSameBlockTest
     extends PropSpec
@@ -23,12 +24,13 @@ class BlockchainUpdaterGeneratorFeeSameBlockTest
     recipient <- accountGen
     fee       <- smallFeeGen
     ts        <- positiveIntGen
-    genesis: GenesisTransaction = GenesisTransaction.create(sender, ENOUGH_AMT, ts).right.get
+    genesis: GenesisTransaction = GenesisTransaction.create(sender, ENOUGH_AMT, ts).explicitGet()
     payment: TransferTransactionV1 <- wavesTransferGeneratorP(sender, recipient)
-    generatorPaymentOnFee: TransferTransactionV1 = createWavesTransfer(defaultSigner, recipient, payment.fee, fee, ts + 1).right.get
+    generatorPaymentOnFee: TransferTransactionV1 = createWavesTransfer(defaultSigner, recipient, payment.fee, fee, ts + 1).explicitGet()
   } yield (genesis, payment, generatorPaymentOnFee)
 
   property("block generator can spend fee after transaction before applyMinerFeeWithTransactionAfter") {
+    assume(BlockchainFeatures.implemented.contains(BlockchainFeatures.SmartAccounts.id))
     scenario(preconditionsAndPayments, DefaultWavesSettings) {
       case (domain, (genesis, somePayment, generatorPaymentOnFee)) =>
         val blocks = chainBlocks(Seq(Seq(genesis), Seq(generatorPaymentOnFee, somePayment)))

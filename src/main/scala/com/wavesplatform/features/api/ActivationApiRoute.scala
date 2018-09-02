@@ -8,8 +8,8 @@ import com.wavesplatform.state.Blockchain
 import io.swagger.annotations._
 import javax.ws.rs.Path
 import play.api.libs.json.Json
-import scorex.api.http.{ApiRoute, CommonApiFunctions}
-import scorex.utils.ScorexLogging
+import com.wavesplatform.api.http.{ApiRoute, CommonApiFunctions}
+import com.wavesplatform.utils.ScorexLogging
 
 @Path("/activation")
 @Api(value = "activation")
@@ -47,7 +47,7 @@ case class ActivationApiRoute(settings: RestAPISettings,
           val status = blockchain.featureStatus(id, height)
           FeatureActivationStatus(
             id,
-            BlockchainFeatures.feature(id).description,
+            BlockchainFeatures.feature(id).fold("Unknown feature")(_.description),
             status,
             (BlockchainFeatures.implemented.contains(id), featuresSettings.supported.contains(id)) match {
               case (false, _) => NodeFeatureStatus.NotImplemented

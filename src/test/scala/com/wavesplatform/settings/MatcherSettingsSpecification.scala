@@ -1,18 +1,24 @@
 package com.wavesplatform.settings
 
-import scala.concurrent.duration._
 import com.typesafe.config.ConfigFactory
 import com.wavesplatform.matcher.MatcherSettings
-import com.wavesplatform.matcher.market.BalanceWatcherWorkerActor
 import org.scalatest.{FlatSpec, Matchers}
-import scorex.transaction.assets.exchange.AssetPair
+
+import scala.concurrent.duration._
+
+import scala.concurrent.duration._
 
 class MatcherSettingsSpecification extends FlatSpec with Matchers {
   "MatcherSettings" should "read values" in {
+<<<<<<< HEAD
     val config = loadConfig(
       ConfigFactory.parseString(
         """Agate {
         |  directory: "/Agate"
+=======
+    val config = loadConfig(ConfigFactory.parseString("""waves {
+        |  directory: "/waves"
+>>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
         |  matcher {
         |    enable: yes
         |    account: "BASE58MATCHERACCOUNT"
@@ -22,26 +28,26 @@ class MatcherSettingsSpecification extends FlatSpec with Matchers {
         |    order-match-tx-fee: 100000
         |    snapshots-interval: 1d
         |    order-cleanup-interval: 5m
-        |    max-open-orders: 1000
         |    rest-order-limit: 100
         |    price-assets: [
         |      "Agate",
         |      "8LQW8f7P5d5PZM7GtZEBgaqRPGSzS3DfPuiXrURJ4AJS",
         |      "DHgwrRvVyqJsepd32YbBqUeDH4GJ1N984X8QoekjgH8J"
         |    ]
+<<<<<<< HEAD
         |    predefined-pairs: [
         |      {amountAsset = "Agate", priceAsset = "8LQW8f7P5d5PZM7GtZEBgaqRPGSzS3DfPuiXrURJ4AJS"},
         |      {amountAsset = "DHgwrRvVyqJsepd32YbBqUeDH4GJ1N984X8QoekjgH8J", priceAsset = "Agate"},
         |      {amountAsset = "DHgwrRvVyqJsepd32YbBqUeDH4GJ1N984X8QoekjgH8J", priceAsset = "8LQW8f7P5d5PZM7GtZEBgaqRPGSzS3DfPuiXrURJ4AJS"},
         |    ]
         |    max-timestamp-diff = 3h
+=======
+        |    max-timestamp-diff = 30d
+>>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
         |    blacklisted-assets: ["a"]
         |    blacklisted-names: ["b"]
         |    blacklisted-addresses: ["c"]
-        |    balance-watching {
-        |      enable: yes
-        |      one-address-processing-timeout: 32s
-        |    }
+        |    validation-timeout = 10m
         |  }
         |}""".stripMargin))
 
@@ -56,8 +62,8 @@ class MatcherSettingsSpecification extends FlatSpec with Matchers {
     settings.snapshotsDataDir should be("/Agate/matcher/snapshots")
     settings.snapshotsInterval should be(1.day)
     settings.orderCleanupInterval should be(5.minute)
-    settings.maxOpenOrders should be(1000)
     settings.maxOrdersPerRequest should be(100)
+<<<<<<< HEAD
     settings.priceAssets should be(Seq("Agate", "8LQW8f7P5d5PZM7GtZEBgaqRPGSzS3DfPuiXrURJ4AJS", "DHgwrRvVyqJsepd32YbBqUeDH4GJ1N984X8QoekjgH8J"))
     settings.predefinedPairs should be(
       Seq(
@@ -65,12 +71,12 @@ class MatcherSettingsSpecification extends FlatSpec with Matchers {
         AssetPair.createAssetPair("DHgwrRvVyqJsepd32YbBqUeDH4GJ1N984X8QoekjgH8J", "Agate").get,
         AssetPair.createAssetPair("DHgwrRvVyqJsepd32YbBqUeDH4GJ1N984X8QoekjgH8J", "8LQW8f7P5d5PZM7GtZEBgaqRPGSzS3DfPuiXrURJ4AJS").get
       ))
+=======
+    settings.priceAssets should be(Seq("WAVES", "8LQW8f7P5d5PZM7GtZEBgaqRPGSzS3DfPuiXrURJ4AJS", "DHgwrRvVyqJsepd32YbBqUeDH4GJ1N984X8QoekjgH8J"))
+>>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
     settings.blacklistedAssets shouldBe Set("a")
     settings.blacklistedNames.map(_.pattern.pattern()) shouldBe Seq("b")
+    settings.validationTimeout shouldBe 10.minutes
     settings.blacklistedAddresses shouldBe Set("c")
-    settings.balanceWatching shouldBe BalanceWatcherWorkerActor.Settings(
-      enable = true,
-      oneAddressProcessingTimeout = 32.seconds
-    )
   }
 }

@@ -4,20 +4,21 @@ import java.io.File
 import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
 
 import com.typesafe.config.ConfigFactory
+import com.wavesplatform.account.{AddressOrAlias, AddressScheme, Alias}
 import com.wavesplatform.database.LevelDBWriter
 import com.wavesplatform.db.LevelDBFactory
 import com.wavesplatform.lang.v1.traits.Environment
+import com.wavesplatform.lang.v1.traits.domain.Recipient
 import com.wavesplatform.settings.{WavesSettings, loadConfig}
 import com.wavesplatform.state.WavesEnvironmentBenchmark._
 import com.wavesplatform.state.bench.DataTestData
+import com.wavesplatform.transaction.smart.WavesEnvironment
+import com.wavesplatform.utils.Base58
 import monix.eval.Coeval
 import org.iq80.leveldb.{DB, Options}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
-import scodec.bits.BitVector
-import scorex.account.{AddressOrAlias, AddressScheme, Alias}
-import scorex.crypto.encode.Base58
-import scorex.transaction.smart.WavesEnvironment
+import scodec.bits.{BitVector, ByteVector}
 
 import scala.io.Codec
 
@@ -33,13 +34,13 @@ import scala.io.Codec
 @BenchmarkMode(Array(Mode.AverageTime))
 @Threads(1)
 @Fork(1)
-@Warmup(iterations = 1)
-@Measurement(iterations = 5)
+@Warmup(iterations = 10)
+@Measurement(iterations = 10)
 class WavesEnvironmentBenchmark {
 
   @Benchmark
   def resolveAddress_test(st: ResolveAddressSt, bh: Blackhole): Unit = {
-    bh.consume(st.environment.resolveAddress(st.aliases.random))
+    bh.consume(st.environment.resolveAlias(st.aliases.random))
   }
 
   @Benchmark
@@ -54,18 +55,18 @@ class WavesEnvironmentBenchmark {
 
   @Benchmark
   def accountBalanceOf_waves_test(st: AccountBalanceOfWavesSt, bh: Blackhole): Unit = {
-    bh.consume(st.environment.accountBalanceOf(st.accounts.random, None))
+    bh.consume(st.environment.accountBalanceOf(Recipient.Address(ByteVector(st.accounts.random)), None))
   }
 
   @Benchmark
   def accountBalanceOf_asset_test(st: AccountBalanceOfAssetSt, bh: Blackhole): Unit = {
-    bh.consume(st.environment.accountBalanceOf(st.accounts.random, Some(st.assets.random)))
+    bh.consume(st.environment.accountBalanceOf(Recipient.Address(ByteVector(st.accounts.random)), Some(st.assets.random)))
   }
 
   @Benchmark
   def data_test(st: DataSt, bh: Blackhole): Unit = {
     val x = st.data.random
-    bh.consume(st.environment.data(x.addr.toArray, x.key, x.dataType))
+    bh.consume(st.environment.data(Recipient.Address(x.addr), x.key, x.dataType))
   }
 
 }
@@ -74,7 +75,7 @@ object WavesEnvironmentBenchmark {
 
   @State(Scope.Benchmark)
   class ResolveAddressSt extends BaseSt {
-    val aliases: Vector[Array[Byte]] = load("resolveAddress", benchSettings.aliasesFile)(x => Alias.fromString(x).explicitGet().bytes.arr)
+    val aliases: Vector[String] = load("resolveAddress", benchSettings.aliasesFile)(x => Alias.fromString(x).explicitGet().name)
   }
 
   @State(Scope.Benchmark)

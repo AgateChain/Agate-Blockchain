@@ -14,8 +14,12 @@ class MinerStateTestSuite extends FunSuite with CancelAfterFailure with NodesFro
 
   override protected def nodeConfigs: Seq[Config] = Configs
 
+<<<<<<< HEAD
   private val transferFee    = 0.001.Agate
   private val transferAmount = 1000.Agate
+=======
+  private val transferAmount = 1000.waves
+>>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
 
   private def miner               = nodes.head
   private def nodeWithZeroBalance = nodes.last
@@ -25,7 +29,7 @@ class MinerStateTestSuite extends FunSuite with CancelAfterFailure with NodesFro
     val (balance1, eff1)    = nodeWithZeroBalance.accountBalances(newMinerAddress)
     val nodeMinerInfoBefore = nodeWithZeroBalance.debugMinerInfo()
     all(nodeMinerInfoBefore) shouldNot matchPattern { case State(`newMinerAddress`, _, ts) if ts > 0 => }
-    val txId = miner.transfer(miner.address, newMinerAddress, transferAmount, transferFee).id
+    val txId = miner.transfer(miner.address, newMinerAddress, transferAmount, minFee).id
     nodes.waitForHeightAriseAndTxPresent(txId)
 
     val heightAfterTransfer = miner.height
@@ -41,9 +45,14 @@ class MinerStateTestSuite extends FunSuite with CancelAfterFailure with NodesFro
 
 object MinerStateTestSuite {
   import com.wavesplatform.it.NodeConfigs._
+<<<<<<< HEAD
   val microblockActivationHeight = 0
   private val minerConfig        = ConfigFactory.parseString(s"""
     |Agate {
+=======
+  private val minerConfig = ConfigFactory.parseString(s"""
+    |waves {
+>>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
     |  synchronization.synchronization-timeout = 10s
     |  blockchain.custom.functionality {
     |    pre-activated-features.1 = 0

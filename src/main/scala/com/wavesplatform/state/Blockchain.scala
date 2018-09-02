@@ -1,11 +1,11 @@
 package com.wavesplatform.state
 
+import com.wavesplatform.account.{Address, Alias}
+import com.wavesplatform.block.{Block, BlockHeader}
 import com.wavesplatform.state.reader.LeaseDetails
-import scorex.account.{Address, Alias}
-import scorex.block.{Block, BlockHeader}
-import scorex.transaction.lease.LeaseTransaction
-import scorex.transaction.smart.script.Script
-import scorex.transaction.{AssetId, Transaction}
+import com.wavesplatform.transaction.lease.LeaseTransaction
+import com.wavesplatform.transaction.smart.script.Script
+import com.wavesplatform.transaction.{AssetId, Transaction, ValidationError}
 
 trait Blockchain {
   def height: Int
@@ -42,10 +42,12 @@ trait Blockchain {
   def addressTransactions(address: Address, types: Set[Transaction.Type], count: Int, from: Int): Seq[(Int, Transaction)]
 
   def containsTransaction(id: ByteStr): Boolean
+  def forgetTransactions(pred: (ByteStr, Long) => Boolean): Map[ByteStr, Long]
+  def learnTransactions(values: Map[ByteStr, Long]): Unit
 
   def assetDescription(id: ByteStr): Option[AssetDescription]
 
-  def resolveAlias(a: Alias): Option[Address]
+  def resolveAlias(a: Alias): Either[ValidationError, Address]
 
   def leaseDetails(leaseId: ByteStr): Option[LeaseDetails]
 
@@ -55,13 +57,14 @@ trait Blockchain {
   def balanceSnapshots(address: Address, from: Int, to: Int): Seq[BalanceSnapshot]
 
   def accountScript(address: Address): Option[Script]
+  def hasScript(address: Address): Boolean
 
   def accountData(acc: Address): AccountDataInfo
   def accountData(acc: Address, key: String): Option[DataEntry[_]]
 
   def balance(address: Address, mayBeAssetId: Option[AssetId]): Long
 
-  def assetDistribution(height: Int, assetId: ByteStr): Map[Address, Long]
+  def assetDistribution(assetId: ByteStr): Map[Address, Long]
   def wavesDistribution(height: Int): Map[Address, Long]
 
   // the following methods are used exclusively by patches
@@ -73,5 +76,4 @@ trait Blockchain {
 
   def append(diff: Diff, block: Block): Unit
   def rollbackTo(targetBlockId: ByteStr): Seq[Block]
-
 }

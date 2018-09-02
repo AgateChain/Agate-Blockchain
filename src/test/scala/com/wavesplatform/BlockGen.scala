@@ -3,16 +3,16 @@ package com.wavesplatform
 import com.wavesplatform.state._
 import org.scalacheck.Gen
 import org.scalatest.Suite
-import scorex.account.PrivateKeyAccount
-import scorex.block.Block
-import scorex.consensus.nxt.NxtLikeConsensusBlockData
-import scorex.transaction.{SignedTransaction, Transaction}
+import com.wavesplatform.account.PrivateKeyAccount
+import com.wavesplatform.block.Block
+import com.wavesplatform.consensus.nxt.NxtLikeConsensusBlockData
+import com.wavesplatform.transaction.{ProvenTransaction, Transaction}
 
 trait BlockGen extends TransactionGen { _: Suite =>
 
   import BlockGen._
 
-  val blockParamGen: Gen[(Seq[SignedTransaction], PrivateKeyAccount)] = for {
+  val blockParamGen: Gen[(Seq[ProvenTransaction], PrivateKeyAccount)] = for {
     count        <- Gen.choose(minTransactionsInBlockCount, maxTransactionsInBlockCount)
     transactions <- randomTransactionsGen(count)
     signer       <- accountGen

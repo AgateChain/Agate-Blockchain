@@ -8,7 +8,7 @@ import net.ceedubs.ficus.readers.ArbitraryTypeReader._
 
 case class WavesSettings(directory: String,
                          dataDirectory: String,
-                         levelDbCacheSize: Long,
+                         maxCacheSize: Int,
                          networkSettings: NetworkSettings,
                          walletSettings: WalletSettings,
                          blockchainSettings: BlockchainSettings,
@@ -31,14 +31,24 @@ object WavesSettings {
   def fromConfig(config: Config): WavesSettings = {
     val directory               = config.as[String](s"$configPath.directory")
     val dataDirectory           = config.as[String](s"$configPath.data-directory")
+<<<<<<< HEAD
     val levelDbCacheSize        = config.getBytes(s"$configPath.leveldb-cache-size")
     val networkSettings         = config.as[NetworkSettings]("Agate.network")
     val walletSettings          = config.as[WalletSettings]("Agate.wallet")
+=======
+    val maxCacheSize            = config.as[Int](s"$configPath.max-cache-size")
+    val networkSettings         = config.as[NetworkSettings]("waves.network")
+    val walletSettings          = config.as[WalletSettings]("waves.wallet")
+>>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
     val blockchainSettings      = BlockchainSettings.fromConfig(config)
     val checkpointsSettings     = CheckpointsSettings.fromConfig(config)
     val feesSettings            = FeesSettings.fromConfig(config)
     val matcherSettings         = MatcherSettings.fromConfig(config)
+<<<<<<< HEAD
     val minerSettings           = config.as[MinerSettings]("Agate.miner")
+=======
+    val minerSettings           = MinerSettings.fromConfig(config)
+>>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
     val restAPISettings         = RestAPISettings.fromConfig(config)
     val synchronizationSettings = SynchronizationSettings.fromConfig(config)
     val utxSettings             = config.as[UtxSettings]("Agate.utx")
@@ -48,7 +58,7 @@ object WavesSettings {
     WavesSettings(
       directory,
       dataDirectory,
-      levelDbCacheSize,
+      maxCacheSize,
       networkSettings,
       walletSettings,
       blockchainSettings,

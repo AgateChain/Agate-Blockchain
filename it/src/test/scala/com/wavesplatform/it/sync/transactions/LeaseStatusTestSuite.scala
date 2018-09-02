@@ -3,32 +3,35 @@ package com.wavesplatform.it.sync.transactions
 import com.typesafe.config.{Config, ConfigFactory}
 import com.wavesplatform.it.api.SyncHttpApi._
 import com.wavesplatform.it.transactions.BaseTransactionSuite
-import com.wavesplatform.it.util._
 import org.scalatest.CancelAfterFailure
 import play.api.libs.json.Json
-import scorex.transaction.lease.LeaseTransaction.Status.{Active, Canceled}
+import com.wavesplatform.it.sync._
+import com.wavesplatform.transaction.lease.LeaseTransaction.Status.{Active, Canceled}
 
 class LeaseStatusTestSuite extends BaseTransactionSuite with CancelAfterFailure {
   import LeaseStatusTestSuite._
 
   override protected def nodeConfigs: Seq[Config] = Configs
 
+<<<<<<< HEAD
   private val transferFee   = 0.001.Agate
   private val leasingAmount = 10.Agate
 
+=======
+>>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
   test("verification of leasing status") {
-    val createdLeaseTxId = sender.lease(firstAddress, secondAddress, leasingAmount, leasingFee = transferFee).id
+    val createdLeaseTxId = sender.lease(firstAddress, secondAddress, leasingAmount, leasingFee = minFee).id
     nodes.waitForHeightAriseAndTxPresent(createdLeaseTxId)
     val status = getStatus(createdLeaseTxId)
     status shouldBe Active
 
-    val cancelLeaseTxId = sender.cancelLease(firstAddress, createdLeaseTxId, fee = transferFee).id
+    val cancelLeaseTxId = sender.cancelLease(firstAddress, createdLeaseTxId, fee = minFee).id
     notMiner.waitForTransaction(cancelLeaseTxId)
+    nodes.waitForHeightArise()
     val status1 = getStatus(createdLeaseTxId)
     status1 shouldBe Canceled
     val sizeActiveLeases = sender.activeLeases(firstAddress).size
     sizeActiveLeases shouldBe 0
-
   }
 
   private def getStatus(txId: String): String = {
@@ -39,13 +42,13 @@ class LeaseStatusTestSuite extends BaseTransactionSuite with CancelAfterFailure 
 }
 
 object LeaseStatusTestSuite {
-  private val blockGenerationOffest = "10000ms"
+  private val blockGenerationOffset = "10000ms"
   import com.wavesplatform.it.NodeConfigs.Default
 
   private val minerConfig = ConfigFactory.parseString(s"""Agate {
        |   miner{
        |      enable = yes
-       |      minimal-block-generation-offset = $blockGenerationOffest
+       |      minimal-block-generation-offset = $blockGenerationOffset
        |      quorum = 0
        |      micro-block-interval = 3s
        |      max-transactions-in-key-block = 0
@@ -55,7 +58,7 @@ object LeaseStatusTestSuite {
 
   private val notMinerConfig = ConfigFactory.parseString(s"""Agate {
        |   miner.enable = no
-       |   miner.minimal-block-generation-offset = $blockGenerationOffest
+       |   miner.minimal-block-generation-offset = $blockGenerationOffset
        |}
      """.stripMargin)
 

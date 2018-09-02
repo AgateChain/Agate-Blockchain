@@ -6,13 +6,12 @@ import java.util
 import com.google.common.primitives.{Bytes, Ints}
 import com.wavesplatform.mining.Miner.MaxTransactionsPerMicroblock
 import com.wavesplatform.state.ByteStr
-import scorex.account.PublicKeyAccount
-import scorex.block.{Block, MicroBlock}
-import scorex.crypto.signatures.Curve25519.{KeyLength, SignatureLength}
-import scorex.network.message.Message._
-import scorex.network.message._
-import scorex.transaction.{Transaction, TransactionParsers}
-
+import com.wavesplatform.account.PublicKeyAccount
+import com.wavesplatform.block.{Block, MicroBlock}
+import com.wavesplatform.network.message.Message._
+import com.wavesplatform.network.message._
+import com.wavesplatform.transaction.{Transaction, TransactionParsers}
+import com.wavesplatform.crypto._
 import scala.util.Try
 
 object GetPeersSpec extends MessageSpec[GetPeers.type] {
@@ -191,7 +190,7 @@ object TransactionSpec extends MessageSpec[Transaction] {
   override val messageCode: MessageCode = 25: Byte
 
   // Modeled after Data Transaction https://wavesplatform.atlassian.net/wiki/spaces/MAIN/pages/119734321/Data+Transaction
-  override val maxLength: Int = 150000
+  override val maxLength: Int = 150 * 1024
 
   override def deserializeData(bytes: Array[Byte]): Try[Transaction] =
     TransactionParsers.parseBytes(bytes)

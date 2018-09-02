@@ -6,15 +6,16 @@ import java.nio.file.Files
 import com.wavesplatform.TransactionGenBase
 import com.wavesplatform.database.LevelDBWriter
 import com.wavesplatform.db.LevelDBFactory
+import com.wavesplatform.mining.MiningConstraint
 import com.wavesplatform.settings.FunctionalitySettings
 import com.wavesplatform.state.diffs.BlockDiffer
 import org.iq80.leveldb.{DB, Options}
 import org.openjdk.jmh.annotations.{Setup, TearDown}
 import org.scalacheck.Gen
-import scorex.account.PrivateKeyAccount
-import scorex.block.Block
-import scorex.lagonaki.mocks.TestBlock
-import scorex.transaction.{GenesisTransaction, Transaction}
+import com.wavesplatform.account.PrivateKeyAccount
+import com.wavesplatform.block.Block
+import com.wavesplatform.lagonaki.mocks.TestBlock
+import com.wavesplatform.transaction.{GenesisTransaction, Transaction}
 
 trait BaseState extends TransactionGenBase {
   import BaseState._
@@ -54,7 +55,11 @@ trait BaseState extends TransactionGenBase {
   private val initGen: Gen[(PrivateKeyAccount, Block)] = for {
     rich <- accountGen
   } yield {
+<<<<<<< HEAD
     val genesisTx = GenesisTransaction.create(rich, Agate(100000000L), System.currentTimeMillis() - 10000).right.get
+=======
+    val genesisTx = GenesisTransaction.create(rich, waves(100000000L), System.currentTimeMillis() - 10000).explicitGet()
+>>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
     (rich, TestBlock.create(time = genesisTx.timestamp, Seq(genesisTx)))
   }
 
@@ -65,7 +70,7 @@ trait BaseState extends TransactionGenBase {
   )
 
   private def append(prev: Option[Block], next: Block): Unit = {
-    val preconditionDiff = BlockDiffer.fromBlock(fsSettings, state, prev, next).explicitGet()
+    val preconditionDiff = BlockDiffer.fromBlock(fsSettings, state, prev, next, MiningConstraint.Unlimited).explicitGet()._1
     state.append(preconditionDiff, next)
   }
 

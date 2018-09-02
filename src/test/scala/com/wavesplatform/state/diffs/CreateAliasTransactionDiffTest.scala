@@ -7,11 +7,11 @@ import com.wavesplatform.{NoShrink, TransactionGen}
 import org.scalacheck.Gen
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.{Matchers, PropSpec}
-import scorex.account.PrivateKeyAccount
-import scorex.lagonaki.mocks.TestBlock
-import scorex.settings.TestFunctionalitySettings
-import scorex.transaction.assets.IssueTransaction
-import scorex.transaction.{CreateAliasTransaction, CreateAliasTransactionV1, GenesisTransaction}
+import com.wavesplatform.account.PrivateKeyAccount
+import com.wavesplatform.settings.TestFunctionalitySettings
+import com.wavesplatform.lagonaki.mocks.TestBlock
+import com.wavesplatform.transaction.assets.IssueTransaction
+import com.wavesplatform.transaction.{CreateAliasTransaction, CreateAliasTransactionV1, GenesisTransaction}
 
 class CreateAliasTransactionDiffTest extends PropSpec with PropertyChecks with Matchers with TransactionGen with NoShrink {
 
@@ -24,7 +24,7 @@ class CreateAliasTransactionDiffTest extends PropSpec with PropertyChecks with M
     : Gen[(GenesisTransaction, CreateAliasTransaction, CreateAliasTransaction, CreateAliasTransaction, CreateAliasTransaction)] = for {
     master <- accountGen
     ts     <- timestampGen
-    genesis: GenesisTransaction = GenesisTransaction.create(master, ENOUGH_AMT, ts).right.get
+    genesis: GenesisTransaction = GenesisTransaction.create(master, ENOUGH_AMT, ts).explicitGet()
     alias                    <- aliasGen
     alias2                   <- aliasGen suchThat (_.name != alias.name)
     fee                      <- smallFeeGen
@@ -48,8 +48,8 @@ class CreateAliasTransactionDiffTest extends PropSpec with PropertyChecks with M
             blockDiff.aliases shouldBe Map(anotherAliasTx.alias -> senderAcc)
 
             newState.aliasesOfAddress(senderAcc).toSet shouldBe Set(anotherAliasTx.alias, aliasTx.alias)
-            newState.resolveAlias(aliasTx.alias) shouldBe Some(senderAcc)
-            newState.resolveAlias(anotherAliasTx.alias) shouldBe Some(senderAcc)
+            newState.resolveAlias(aliasTx.alias) shouldBe Right(senderAcc)
+            newState.resolveAlias(anotherAliasTx.alias) shouldBe Right(senderAcc)
         }
     }
   }
@@ -71,8 +71,8 @@ class CreateAliasTransactionDiffTest extends PropSpec with PropertyChecks with M
     master           <- accountGen
     aliasedRecipient <- otherAccountGen(candidate = master)
     ts               <- positiveIntGen
-    gen: GenesisTransaction  = GenesisTransaction.create(master, ENOUGH_AMT, ts).right.get
-    gen2: GenesisTransaction = GenesisTransaction.create(aliasedRecipient, ENOUGH_AMT + 1, ts).right.get
+    gen: GenesisTransaction  = GenesisTransaction.create(master, ENOUGH_AMT, ts).explicitGet()
+    gen2: GenesisTransaction = GenesisTransaction.create(aliasedRecipient, ENOUGH_AMT + 1, ts).explicitGet()
     issue1: IssueTransaction <- issueReissueBurnGeneratorP(ENOUGH_AMT, master).map(_._1)
     issue2: IssueTransaction <- issueReissueBurnGeneratorP(ENOUGH_AMT, master).map(_._1)
     maybeAsset               <- Gen.option(issue1)
@@ -80,7 +80,7 @@ class CreateAliasTransactionDiffTest extends PropSpec with PropertyChecks with M
     maybeFeeAsset            <- Gen.oneOf(maybeAsset, maybeAsset2)
     alias                    <- aliasGen
     fee                      <- smallFeeGen
-    aliasTx = CreateAliasTransactionV1.selfSigned(aliasedRecipient, alias, fee, ts).right.get
+    aliasTx = CreateAliasTransactionV1.selfSigned(aliasedRecipient, alias, fee, ts).explicitGet()
     transfer <- transferGeneratorP(master, alias, maybeAsset.map(_.id()), maybeFeeAsset.map(_.id()))
     lease    <- leaseAndCancelGeneratorP(master, alias, master).map(_._1)
   } yield (gen, gen2, issue1, issue2, aliasTx, transfer, lease)

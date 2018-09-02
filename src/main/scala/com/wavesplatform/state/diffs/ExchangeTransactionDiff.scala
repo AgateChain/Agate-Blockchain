@@ -2,10 +2,11 @@ package com.wavesplatform.state.diffs
 
 import cats._
 import cats.implicits._
+import com.wavesplatform.features.BlockchainFeatures
 import com.wavesplatform.state._
-import scorex.transaction.ValidationError
-import scorex.transaction.ValidationError.{GenericError, OrderValidationError}
-import scorex.transaction.assets.exchange.ExchangeTransaction
+import com.wavesplatform.transaction.ValidationError
+import com.wavesplatform.transaction.ValidationError.{GenericError, OrderValidationError}
+import com.wavesplatform.transaction.assets.exchange.ExchangeTransaction
 
 import scala.util.Right
 
@@ -15,20 +16,29 @@ object ExchangeTransactionDiff {
     val matcher = tx.buyOrder.matcherPublicKey.toAddress
     val buyer   = tx.buyOrder.senderPublicKey.toAddress
     val seller  = tx.sellOrder.senderPublicKey.toAddress
-    val assets = Seq(tx.buyOrder.assetPair.amountAsset,
-                     tx.buyOrder.assetPair.priceAsset,
-                     tx.sellOrder.assetPair.amountAsset,
-                     tx.sellOrder.assetPair.priceAsset).flatten
+    val assetIds = Set(tx.buyOrder.assetPair.amountAsset,
+                       tx.buyOrder.assetPair.priceAsset,
+                       tx.sellOrder.assetPair.amountAsset,
+                       tx.sellOrder.assetPair.priceAsset).flatten
+    val assets             = assetIds.map(blockchain.assetDescription)
+    val smartTradesEnabled = blockchain.activatedFeatures.contains(BlockchainFeatures.SmartAccountsTrades.id)
     for {
-      _ <- Either.cond(!assets.exists(blockchain.assetDescription(_).flatMap(_.script).isDefined),
-                       (),
-                       GenericError(s"Smart assets can't participate in ExchangeTransactions"))
-      _ <- Either.cond(blockchain.accountScript(buyer).isEmpty,
-                       (),
-                       GenericError(s"Buyer $buyer can't participate in ExchangeTransaction because it has assigned Script"))
-      _ <- Either.cond(blockchain.accountScript(seller).isEmpty,
-                       (),
-                       GenericError(s"Seller $seller can't participate in ExchangeTransaction because it has assigned Script"))
+      _ <- Either.cond(assets.forall(_.isDefined), (), GenericError("Assets should be issued before they can be traded"))
+      _ <- Either.cond(
+        !assets.exists(_.flatMap(_.script).isDefined),
+        (),
+        GenericError(s"Smart assets can't participate in ExchangeTransactions (SmartAssetsFeature is disabled)")
+      )
+      _ <- Either.cond(
+        smartTradesEnabled || !blockchain.hasScript(buyer),
+        (),
+        GenericError(s"Buyer $buyer can't participate in ExchangeTransaction because it has assigned Script (SmartAccountsTrades is disabled)")
+      )
+      _ <- Either.cond(
+        smartTradesEnabled || !blockchain.hasScript(seller),
+        (),
+        GenericError(s"Seller $seller can't participate in ExchangeTransaction because it has assigned Script (SmartAccountsTrades is disabled)")
+      )
       t                     <- enoughVolume(tx, blockchain)
       buyPriceAssetChange   <- t.buyOrder.getSpendAmount(t.price, t.amount).liftValidationError(tx).map(-_)
       buyAmountAssetChange  <- t.buyOrder.getReceiveAmount(t.price, t.amount).liftValidationError(tx)

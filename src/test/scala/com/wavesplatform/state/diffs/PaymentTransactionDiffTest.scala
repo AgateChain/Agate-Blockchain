@@ -1,14 +1,14 @@
 package com.wavesplatform.state.diffs
 
 import cats.Monoid
+import com.wavesplatform.settings.TestFunctionalitySettings
 import com.wavesplatform.state._
 import com.wavesplatform.{NoShrink, TransactionGen}
 import org.scalacheck.Gen
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.{Matchers, PropSpec}
-import scorex.lagonaki.mocks.TestBlock
-import scorex.settings.TestFunctionalitySettings
-import scorex.transaction.{GenesisTransaction, PaymentTransaction}
+import com.wavesplatform.lagonaki.mocks.TestBlock
+import com.wavesplatform.transaction.{GenesisTransaction, PaymentTransaction}
 
 class PaymentTransactionDiffTest extends PropSpec with PropertyChecks with Matchers with TransactionGen with NoShrink {
 
@@ -16,7 +16,7 @@ class PaymentTransactionDiffTest extends PropSpec with PropertyChecks with Match
     master    <- accountGen
     recipient <- otherAccountGen(candidate = master)
     ts        <- positiveIntGen
-    genesis: GenesisTransaction = GenesisTransaction.create(master, ENOUGH_AMT, ts).right.get
+    genesis: GenesisTransaction = GenesisTransaction.create(master, ENOUGH_AMT, ts).explicitGet()
     paymentV2: PaymentTransaction <- paymentGeneratorP(master, recipient)
     paymentV3: PaymentTransaction <- paymentGeneratorP(master, recipient)
   } yield (genesis, paymentV2, paymentV3)
@@ -43,4 +43,5 @@ class PaymentTransactionDiffTest extends PropSpec with PropertyChecks with Match
         }
     }
   }
+
 }

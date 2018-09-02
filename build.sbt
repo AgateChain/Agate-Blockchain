@@ -2,6 +2,7 @@ import com.typesafe.sbt.packager.archetypes.TemplateWriter
 import sbt.Keys.{sourceGenerators, _}
 import sbt._
 import sbtcrossproject.CrossPlugin.autoImport.crossProject
+import sbt.internal.inc.ReflectUtilities
 import sbtassembly.MergeStrategy
 
 enablePlugins(JavaServerAppPackaging, JDebPackaging, SystemdPlugin, GitVersioning)
@@ -12,7 +13,7 @@ val versionSource = Def.task {
   // Please, update the fallback version every major and minor releases.
   // This version is used then building from sources without Git repository
   // In case of not updating the version nodes build from headless sources will fail to connect to newer versions
-  val FallbackVersion = (0, 11, 0)
+  val FallbackVersion = (0, 14, 0)
 
   val versionFile      = (sourceManaged in Compile).value / "com" / "wavesplatform" / "Version.scala"
   val versionExtractor = """(\d+)\.(\d+)\.(\d+).*""".r
@@ -34,8 +35,13 @@ val versionSource = Def.task {
 }
 val network = SettingKey[Network]("network")
 network := { Network(sys.props.get("network")) }
+<<<<<<< HEAD
 normalizedName := network.value.name
 name := "Agate"
+=======
+name := "waves"
+normalizedName := s"${name.value}${network.value.packageSuffix}"
+>>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
 
 git.useGitDescribe := true
 git.uncommittedSignifier := Some("DIRTY")
@@ -43,7 +49,7 @@ logBuffered := false
 
 inThisBuild(
   Seq(
-    scalaVersion := "2.12.4",
+    scalaVersion := "2.12.6",
     organization := "com.wavesplatform",
     crossPaths := false,
     scalacOptions ++= Seq("-feature", "-deprecation", "-language:higherKinds", "-language:implicitConversions", "-Ywarn-unused:-implicits", "-Xlint")
@@ -113,9 +119,28 @@ inConfig(Linux)(
     packageDescription := "Agate node"
   ))
 
+bashScriptExtraDefines += s"""addJava "-Dwaves.directory=/var/lib/${normalizedName.value}""""
+
+val linuxScriptPattern = "bin/(.+)".r
+val batScriptPattern   = "bin/([^.]+)\\.bat".r
+
 inConfig(Universal)(
   Seq(
+<<<<<<< HEAD
     mappings += (baseDirectory.value / s"Agate-${network.value}.conf" -> "doc/Agate.conf.sample"),
+=======
+    mappings += (baseDirectory.value / s"waves-${network.value}.conf" -> "doc/waves.conf.sample"),
+    mappings := {
+      val scriptSuffix = network.value.packageSuffix
+      mappings.value.map {
+        case m @ (file, batScriptPattern(script)) =>
+          if (script.endsWith(scriptSuffix)) m else (file, s"bin/$script$scriptSuffix.bat")
+        case m @ (file, linuxScriptPattern(script)) =>
+          if (script.endsWith(scriptSuffix)) m else (file, s"bin/$script$scriptSuffix")
+        case other => other
+      }
+    },
+>>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
     javaOptions ++= Seq(
       // -J prefix is required by the bash script
       "-J-server",
@@ -175,14 +200,34 @@ commands += Command.command("packageAll") { state =>
   "clean" :: "assembly" :: "debian:packageBin" :: state
 }
 
+// https://stackoverflow.com/a/48592704/4050580
+def allProjects: List[ProjectReference] = ReflectUtilities.allVals[Project](this).values.toList map { p =>
+  p: ProjectReference
+}
+
+addCommandAlias("checkPR", """;set scalacOptions in ThisBuild ++= Seq("-Xfatal-warnings"); Global / checkPRRaw""")
+lazy val checkPRRaw = taskKey[Unit]("Build a project and run unit tests")
+checkPRRaw in Global := {
+  try {
+    clean.all(ScopeFilter(inProjects(allProjects: _*), inConfigurations(Compile))).value
+  } finally {
+    test.all(ScopeFilter(inProjects(langJVM, node), inConfigurations(Test))).value
+    compile.all(ScopeFilter(inProjects(generator, benchmark), inConfigurations(Test))).value
+  }
+}
+
 lazy val lang =
   crossProject(JSPlatform, JVMPlatform)
     .withoutSuffixFor(JVMPlatform)
     .settings(
       version := "0.0.1",
+      // the following line forces scala version across all dependencies
+      scalaModuleInfo ~= (_.map(_.withOverrideScalaVersion(true))),
       test in assembly := {},
+      addCompilerPlugin(Dependencies.kindProjector),
       libraryDependencies ++=
         Dependencies.cats ++
+          Dependencies.fp ++
           Dependencies.scalacheck ++
           Dependencies.scorex ++
           Dependencies.scalatest ++
@@ -209,6 +254,7 @@ lazy val langJVM = lang.jvm
 lazy val node = project
   .in(file("."))
   .settings(
+    addCompilerPlugin(Dependencies.kindProjector),
     libraryDependencies ++=
       Dependencies.network ++
         Dependencies.db ++
@@ -239,4 +285,4 @@ lazy val generator = project
 
 lazy val benchmark = project
   .enablePlugins(JmhPlugin)
-  .dependsOn(node % "compile->compile;test->test")
+  .dependsOn(node % "compile->compile;test->test", langJVM % "compile->compile;test->test")

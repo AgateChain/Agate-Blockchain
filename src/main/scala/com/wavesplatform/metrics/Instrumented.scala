@@ -1,7 +1,7 @@
 package com.wavesplatform.metrics
 
-import kamon.metric.instrument.Histogram
-import scorex.utils.ScorexLogging
+import com.wavesplatform.utils.ScorexLogging
+import kamon.metric.{Counter, Histogram}
 
 trait Instrumented {
   self: ScorexLogging =>
@@ -25,6 +25,17 @@ trait Instrumented {
     if (r.isRight)
       h.safeRecord(time)
     r
+  }
+
+  def incrementSuccessful[A, B](c: Counter, f: => Either[A, B]): Either[A, B] = {
+    val r = f
+    if (r.isRight)
+      c.increment()
+    r
+  }
+
+  def measureAndIncSuccessful[A, B](h: Histogram, c: Counter)(f: => Either[A, B]): Either[A, B] = {
+    measureSuccessful(h, incrementSuccessful(c, f))
   }
 
   def measureSuccessful[A](h: Histogram, f: => Option[A]): Option[A] = {

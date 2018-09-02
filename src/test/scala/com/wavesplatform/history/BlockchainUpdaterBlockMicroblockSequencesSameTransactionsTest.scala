@@ -6,10 +6,10 @@ import com.wavesplatform.{NoShrink, TransactionGen}
 import org.scalacheck.Gen
 import org.scalatest._
 import org.scalatest.prop.PropertyChecks
-import scorex.account.PrivateKeyAccount
-import scorex.block.{Block, MicroBlock}
-import scorex.transaction._
-import scorex.transaction.transfer._
+import com.wavesplatform.account.PrivateKeyAccount
+import com.wavesplatform.block.{Block, MicroBlock}
+import com.wavesplatform.transaction._
+import com.wavesplatform.transaction.transfer._
 
 class BlockchainUpdaterBlockMicroblockSequencesSameTransactionsTest
     extends PropSpec
@@ -50,7 +50,7 @@ class BlockchainUpdaterBlockMicroblockSequencesSameTransactionsTest
       ts     <- positiveIntGen
       fee    <- smallFeeGen
       amt    <- smallFeeGen
-      genesis: GenesisTransaction    = GenesisTransaction.create(master, ENOUGH_AMT, ts).right.get
+      genesis: GenesisTransaction    = GenesisTransaction.create(master, ENOUGH_AMT, ts).explicitGet()
       payment: TransferTransactionV1 = createWavesTransfer(master, master, amt, fee, ts).explicitGet()
     } yield (miner, genesis, payment, ts)
     scenario(preconditionsAndPayments, MicroblocksActivatedAt0WavesSettings) {

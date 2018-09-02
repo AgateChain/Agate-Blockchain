@@ -4,72 +4,41 @@ import java.io.IOException
 import java.net.InetSocketAddress
 import java.util.concurrent.TimeoutException
 
-import akka.http.scaladsl.model.StatusCodes
+import com.wavesplatform.api.http.PeersApiRoute.{ConnectReq, connectFormat}
+import com.wavesplatform.api.http.alias.CreateAliasV1Request
+import com.wavesplatform.api.http.assets._
+import com.wavesplatform.api.http.leasing.{LeaseCancelV1Request, LeaseV1Request, SignedLeaseCancelV1Request, SignedLeaseV1Request}
+import com.wavesplatform.api.http.{AddressApiRoute, DataRequest}
 import com.wavesplatform.features.api.ActivationStatus
-import com.wavesplatform.http.api_key
+import com.wavesplatform.http.DebugApiRoute._
+import com.wavesplatform.http.DebugMessage._
+import com.wavesplatform.http.{DebugMessage, RollbackParams, api_key}
 import com.wavesplatform.it.Node
 import com.wavesplatform.it.util.GlobalTimer.{instance => timer}
 import com.wavesplatform.it.util._
-import com.wavesplatform.matcher.api.CancelOrderRequest
-import com.wavesplatform.state.{ByteStr, DataEntry, Portfolio}
+import com.wavesplatform.state.{DataEntry, Portfolio}
+import com.wavesplatform.transaction.transfer.MassTransferTransaction.Transfer
+import com.wavesplatform.transaction.transfer._
 import org.asynchttpclient.Dsl.{get => _get, post => _post}
 import org.asynchttpclient._
 import org.asynchttpclient.util.HttpConstants
 import org.scalactic.source.Position
-import org.scalatest.{Assertion, Assertions, Matchers}
-import play.api.libs.json.Json.{parse, stringify, toJson}
+import org.scalatest.{Assertions, Matchers}
+import play.api.libs.json.Json.{stringify, toJson}
 import play.api.libs.json._
-import scorex.api.http.PeersApiRoute.{ConnectReq, connectFormat}
-import scorex.api.http.alias.CreateAliasV1Request
-import scorex.api.http.assets._
-import scorex.api.http.leasing.{LeaseCancelV1Request, LeaseV1Request, SignedLeaseCancelV1Request, SignedLeaseV1Request}
-import scorex.api.http.{AddressApiRoute, ApiErrorResponse, DataRequest}
-import scorex.transaction.transfer.MassTransferTransaction.Transfer
-import scorex.transaction.assets.exchange.Order
-import scorex.transaction.transfer._
-import scorex.waves.http.DebugApiRoute._
-import scorex.waves.http.DebugMessage._
-import scorex.waves.http.{DebugMessage, RollbackParams}
 
 import scala.compat.java8.FutureConverters._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.Future.traverse
 import scala.concurrent.duration._
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 object AsyncHttpApi extends Assertions {
 
-  case class ErrorMessage(error: Int, message: String)
-
-  implicit val errorMessageFormat: Format[ErrorMessage] = Json.format
-
-  def assertBadRequest(f: Future[_]): Future[Assertion] = f transform {
-    case Failure(UnexpectedStatusCodeException(_, statusCode, _)) => Success(Assertions.assert(statusCode == StatusCodes.BadRequest.intValue))
-    case Failure(e)                                               => Success(Assertions.fail(e))
-    case _                                                        => Success(Assertions.fail(s"Expecting bad request"))
-  }
-
-  def expectErrorResponse(f: Future[_])(isExpected: ApiErrorResponse => Boolean): Future[Assertion] = f transform {
-    case Failure(UnexpectedStatusCodeException(_, statusCode, responseBody)) =>
-      val parsedError = Json.parse(responseBody).validate[ApiErrorResponse].asOpt
-      parsedError match {
-        case None      => Success(Assertions.fail(s"Expecting bad request"))
-        case Some(err) => Success(Assertions.assert(statusCode == StatusCodes.BadRequest.intValue && isExpected(err)))
-      }
-    case Failure(e) => Success(Assertions.fail(e))
-    case _          => Success(Assertions.fail(s"Expecting bad request"))
-  }
-
-  def assertBadRequestAndMessage(f: Future[_], errorMessage: String): Future[Assertion] = f transform {
-    case Failure(UnexpectedStatusCodeException(_, statusCode, responseBody)) =>
-      Success(Assertions.assert(statusCode == StatusCodes.BadRequest.intValue && parse(responseBody).as[ErrorMessage].message.contains(errorMessage)))
-    case Failure(e) => Success[Assertion](Assertions.fail(e))
-    case _          => Success[Assertion](Assertions.fail(s"Expecting bad request"))
-  }
-
   implicit class NodeAsyncHttpApi(n: Node) extends Assertions with Matchers {
 
+<<<<<<< HEAD
     def matcherGet(path: String,
                    f: RequestBuilder => RequestBuilder = identity,
                    statusCode: Int = HttpConstants.ResponseStatusCodes.OK_200,
@@ -105,6 +74,8 @@ object AsyncHttpApi extends Assertions {
     def getReservedBalance(publicKey: String, timestamp: Long, signature: ByteStr): Future[Map[String, Long]] =
       matcherGetWithSignature(s"/matcher/balance/reserved/$publicKey", timestamp, signature).as[Map[String, Long]]
 
+=======
+>>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
     def get(path: String, f: RequestBuilder => RequestBuilder = identity): Future[Response] =
       retrying(f(_get(s"${n.nodeApiEndpoint}$path")).build())
 
@@ -210,6 +181,8 @@ object AsyncHttpApi extends Assertions {
 
     def balance(address: String): Future[Balance] = get(s"/addresses/balance/$address").as[Balance]
 
+    def getAddresses: Future[Seq[String]] = get(s"/addresses").as[Seq[String]]
+
     def scriptInfo(address: String): Future[AddressApiRoute.AddressScriptInfo] =
       get(s"/addresses/scriptInfo/$address").as[AddressApiRoute.AddressScriptInfo]
 
@@ -236,9 +209,14 @@ object AsyncHttpApi extends Assertions {
       100.millis
     )
 
-    def waitForHeight(expectedHeight: Int): Future[Int] = waitFor[Int](s"height >= $expectedHeight")(_.height, h => h >= expectedHeight, 1.second)
+    def waitForHeight(expectedHeight: Int): Future[Int] = waitFor[Int](s"height >= $expectedHeight")(_.height, h => h >= expectedHeight, 5.seconds)
+
+    def rawTransactionInfo(txId: String): Future[JsValue] = get(s"/transactions/info/$txId").map(r => Json.parse(r.getResponseBody))
 
     def transactionInfo(txId: String): Future[TransactionInfo] = get(s"/transactions/info/$txId").as[TransactionInfo]
+
+    def transactionsByAddress(address: String, limit: Int): Future[Seq[Seq[TransactionInfo]]] =
+      get(s"/transactions/address/$address/limit/$limit").as[Seq[Seq[TransactionInfo]]]
 
     def effectiveBalance(address: String): Future[Balance] = get(s"/addresses/effectiveBalance/$address").as[Balance]
 
@@ -283,6 +261,9 @@ object AsyncHttpApi extends Assertions {
 
     def assetsBalance(address: String): Future[FullAssetsInfo] =
       get(s"/tokens/balance/$address").as[FullAssetsInfo]
+
+    def assetsDetails(assetId: String): Future[AssetInfo] =
+      get(s"/assets/details/$assetId").as[AssetInfo]
 
     def sponsorAsset(sourceAddress: String, assetId: String, minSponsoredAssetFee: Long, fee: Long): Future[Transaction] =
       postJson("/tokens/sponsor", SponsorFeeRequest(1, sourceAddress, assetId, Some(minSponsoredAssetFee), fee)).as[Transaction]
@@ -391,10 +372,10 @@ object AsyncHttpApi extends Assertions {
     def createAddress: Future[String] =
       post(s"${n.nodeApiEndpoint}/addresses").as[JsValue].map(v => (v \ "address").as[String])
 
-    def waitForNextBlock: Future[Block] =
+    def waitForNextBlock: Future[BlockHeaders] =
       for {
-        currentBlock <- lastBlock
-        actualBlock  <- findBlock(_.height > currentBlock.height, currentBlock.height)
+        currentBlock <- lastBlockHeaders
+        actualBlock  <- findBlockHeaders(_.height > currentBlock.height, currentBlock.height)
       } yield actualBlock
 
     def waitForHeightArise: Future[Int] =
@@ -423,6 +404,26 @@ object AsyncHttpApi extends Assertions {
       load(from, (from + 19).min(to))
     }
 
+    def findBlockHeaders(cond: BlockHeaders => Boolean, from: Int = 1, to: Int = Int.MaxValue): Future[BlockHeaders] = {
+      def load(_from: Int, _to: Int): Future[BlockHeaders] = blockHeadersSeq(_from, _to).flatMap { blocks =>
+        blocks
+          .find(cond)
+          .fold[Future[BlockHeaders]] {
+            val maybeLastBlock = blocks.lastOption
+            if (maybeLastBlock.exists(_.height >= to)) {
+              Future.failed(new NoSuchElementException)
+            } else {
+              val newFrom = maybeLastBlock.fold(_from)(b => (b.height + 19).min(to))
+              val newTo   = newFrom + 19
+              n.log.debug(s"Loaded ${blocks.length} blocks, no match found. Next range: [$newFrom, ${newFrom + 19}]")
+              timer.schedule(load(newFrom, newTo), n.settings.blockchainSettings.genesisSettings.averageBlockDelay)
+            }
+          }(Future.successful)
+      }
+
+      load(from, (from + 19).min(to))
+    }
+
     def getGeneratedBlocks(address: String, from: Long, to: Long): Future[Seq[Block]] =
       get(s"/blocks/address/$address/$from/$to").as[Seq[Block]]
 
@@ -434,23 +435,6 @@ object AsyncHttpApi extends Assertions {
                    fee: Long,
                    reissuable: Boolean): Future[Transaction] =
       postJson("/tokens/issue", IssueV1Request(address, name, description, quantity, decimals, reissuable, fee)).as[Transaction]
-
-    def placeOrder(order: Order): Future[MatcherResponse] =
-      matcherPost("/matcher/orderbook", order.json()).as[MatcherResponse]
-
-    def expectIncorrectOrderPlacement(order: Order, expectedStatusCode: Int, expectedStatus: String): Future[Boolean] =
-      matcherPost("/matcher/orderbook", order.json()) transform {
-        case Failure(UnexpectedStatusCodeException(_, `expectedStatusCode`, responseBody)) =>
-          Try(parse(responseBody).as[MatcherStatusResponse]) match {
-            case Success(mr) if mr.status == expectedStatus => Success(true)
-            case Failure(f)                                 => Failure(new RuntimeException(s"Failed to parse response: $f"))
-          }
-        case Success(r) => Failure(new RuntimeException(s"Unexpected matcher response: (${r.getStatusCode}) ${r.getResponseBody}"))
-        case _          => Failure(new RuntimeException(s"Unexpected failure from matcher"))
-      }
-
-    def cancelOrder(amountAsset: String, priceAsset: String, request: CancelOrderRequest): Future[MatcherStatusResponse] =
-      matcherPost(s"/matcher/orderbook/$amountAsset/$priceAsset/cancel", request.json).as[MatcherStatusResponse]
 
     def retrying(r: Request,
                  interval: FiniteDuration = 1.second,
@@ -539,35 +523,40 @@ object AsyncHttpApi extends Assertions {
       n.assetBalance(acc, assetIdString).map(_.balance shouldBe balance)
     }
 
+    def calculateFee(jsobj: JsObject): Future[FeeInfo] =
+      postJsObjectWithApiKey("/transactions/calculateFee", jsobj).as[FeeInfo]
+
   }
 
   implicit class NodesAsyncHttpApi(nodes: Seq[Node]) extends Matchers {
+    def height: Future[Seq[Int]] = traverse(nodes)(_.height)
+
     def waitForHeightAriseAndTxPresent(transactionId: String)(implicit p: Position): Future[Unit] =
       for {
         allHeights   <- traverse(nodes)(_.waitForTransaction(transactionId).map(_.height))
-        _            <- traverse(nodes)(_.waitForHeight(allHeights.max + 2))
+        _            <- traverse(nodes)(_.waitForHeight(allHeights.max + 1))
         finalHeights <- traverse(nodes)(_.waitForTransaction(transactionId).map(_.height))
       } yield all(finalHeights).shouldBe(finalHeights.head)
 
-    def waitForHeightArise(): Future[Unit] =
+    def waitForHeightArise(): Future[Int] =
       for {
-        height <- traverse(nodes)(_.height).map(_.max)
+        height <- height.map(_.max)
         _      <- traverse(nodes)(_.waitForHeight(height + 1))
-      } yield ()
+      } yield (height + 1)
 
-    def waitForSameBlocksAt(height: Int, retryInterval: FiniteDuration = 5.seconds): Future[Boolean] = {
+    def waitForSameBlockHeadesAt(height: Int, retryInterval: FiniteDuration = 5.seconds): Future[Boolean] = {
 
       def waitHeight = waitFor[Int](s"all heights >= $height")(retryInterval)(_.height, _.forall(_ >= height))
 
-      def waitSameBlocks =
-        waitFor[Block](s"same blocks at height = $height")(retryInterval)(_.blockAt(height), { blocks =>
+      def waitSameBlockHeaders =
+        waitFor[BlockHeaders](s"same blocks at height = $height")(retryInterval)(_.blockHeadersAt(height), { blocks =>
           val sig = blocks.map(_.signature)
           sig.forall(_ == sig.head)
         })
 
       for {
         _ <- waitHeight
-        r <- waitSameBlocks
+        r <- waitSameBlockHeaders
       } yield r
     }
 

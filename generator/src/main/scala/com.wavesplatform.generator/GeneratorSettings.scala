@@ -4,7 +4,8 @@ import java.net.InetSocketAddress
 
 import cats.Show
 import cats.implicits.showInterpolator
-import scorex.account.PrivateKeyAccount
+import com.wavesplatform.state.EitherExt2
+import com.wavesplatform.account.PrivateKeyAccount
 
 case class GeneratorSettings(chainId: String,
                              accounts: Seq[String],
@@ -13,9 +14,11 @@ case class GeneratorSettings(chainId: String,
                              mode: Mode.Value,
                              narrow: NarrowTransactionGenerator.Settings,
                              wide: WideTransactionGenerator.Settings,
-                             dynWide: DynamicWideTransactionGenerator.Settings) {
+                             dynWide: DynamicWideTransactionGenerator.Settings,
+                             multisig: MultisigTransactionGenerator.Settings,
+                             oracle: OracleTransactionGenerator.Settings) {
   val addressScheme: Char                        = chainId.head
-  val privateKeyAccounts: Seq[PrivateKeyAccount] = accounts.map(s => PrivateKeyAccount.fromSeed(s).right.get)
+  val privateKeyAccounts: Seq[PrivateKeyAccount] = accounts.map(s => PrivateKeyAccount.fromSeed(s).explicitGet())
 }
 
 object GeneratorSettings {
@@ -26,6 +29,8 @@ object GeneratorSettings {
       case Mode.NARROW   => show"$narrow"
       case Mode.WIDE     => show"$wide"
       case Mode.DYN_WIDE => show"$dynWide"
+      case Mode.MULTISIG => show"$multisig"
+      case Mode.ORACLE   => show"$oracle"
     }).toString
 
     s"""network byte: $chainId

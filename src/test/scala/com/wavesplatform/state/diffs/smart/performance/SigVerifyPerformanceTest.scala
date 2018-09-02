@@ -1,7 +1,8 @@
 package com.wavesplatform.state.diffs.smart.performance
 
-import com.wavesplatform.lang.v1.Terms.Typed
-import com.wavesplatform.lang.v1.{Parser, TypeChecker}
+import com.wavesplatform.lang.v1.compiler.Terms._
+import com.wavesplatform.lang.v1.compiler.CompilerV1
+import com.wavesplatform.lang.v1.parser.Parser
 import com.wavesplatform.metrics.Instrumented
 import com.wavesplatform.state._
 import com.wavesplatform.utils._
@@ -11,11 +12,11 @@ import com.wavesplatform.{NoShrink, TransactionGen, WithDB}
 import org.scalacheck.Gen
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.{Matchers, PropSpec}
-import scorex.account.{PrivateKeyAccount, PublicKeyAccount}
-import scorex.lagonaki.mocks.TestBlock
-import scorex.transaction.GenesisTransaction
-import scorex.transaction.smart.script.v1.ScriptV1
-import scorex.transaction.transfer._
+import com.wavesplatform.account.{PrivateKeyAccount, PublicKeyAccount}
+import com.wavesplatform.lagonaki.mocks.TestBlock
+import com.wavesplatform.transaction.GenesisTransaction
+import com.wavesplatform.transaction.smart.script.v1.ScriptV1
+import com.wavesplatform.transaction.transfer._
 
 class SigVerifyPerformanceTest extends PropSpec with PropertyChecks with Matchers with TransactionGen with NoShrink with WithDB {
 
@@ -34,14 +35,14 @@ class SigVerifyPerformanceTest extends PropSpec with PropertyChecks with Matcher
       fee     <- smallFeeGen
     } yield TransferTransactionV2.selfSigned(version, None, from, to.toAddress, amt, ts, None, fee, Array.emptyByteArray).explicitGet()
 
-  private def differentTransfers(typed: Typed.EXPR) =
+  private def differentTransfers(typed: EXPR) =
     for {
       master    <- accountGen
       recipient <- accountGen
       ts        <- positiveIntGen
       amt       <- smallFeeGen
       fee       <- smallFeeGen
-      genesis = GenesisTransaction.create(master, ENOUGH_AMT, ts).right.get
+      genesis = GenesisTransaction.create(master, ENOUGH_AMT, ts).explicitGet()
       setScript <- selfSignedSetScriptTransactionGenP(master, ScriptV1(typed).explicitGet())
       transfer       = simpleSendGen(master, recipient, ts)
       scriptTransfer = scriptedSendGen(master, recipient, ts)
@@ -50,9 +51,10 @@ class SigVerifyPerformanceTest extends PropSpec with PropertyChecks with Matcher
     } yield (genesis, setScript, transfers, scriptTransfers)
 
   ignore("parallel native signature verification vs sequential scripted signature verification") {
-    val textScript    = "sigVerify(tx.bodyBytes,tx.proof0,tx.senderPk)"
+    val textScript    = "sigVerify(tx.bodyBytes,tx.proofs[0],tx.senderPk)"
     val untypedScript = Parser(textScript).get.value
-    val typedScript   = TypeChecker(dummyTypeCheckerContext, untypedScript).explicitGet()
+    assert(untypedScript.size == 1)
+    val typedScript = CompilerV1(dummyCompilerContext, untypedScript.head).explicitGet()._1
 
     forAll(differentTransfers(typedScript)) {
       case (gen, setScript, transfers, scriptTransfers) =>

@@ -3,11 +3,11 @@ package com.wavesplatform.matcher.model
 import com.wavesplatform.matcher.MatcherSettings
 import com.wavesplatform.settings.FunctionalitySettings
 import com.wavesplatform.state.Blockchain
+import com.wavesplatform.utils.{NTP, ScorexLogging}
 import com.wavesplatform.utx.UtxPool
-import scorex.transaction.ValidationError
-import scorex.transaction.assets.exchange.{ExchangeTransaction, Order}
-import scorex.utils.{NTP, ScorexLogging}
-import scorex.wallet.Wallet
+import com.wavesplatform.transaction.ValidationError
+import com.wavesplatform.transaction.assets.exchange._
+import com.wavesplatform.wallet.Wallet
 
 trait ExchangeTransactionCreator extends ScorexLogging {
   val functionalitySettings: FunctionalitySettings
@@ -27,10 +27,15 @@ trait ExchangeTransactionCreator extends ScorexLogging {
       .privateKeyAccount(submitted.order.matcherPublicKey)
       .flatMap(matcherPrivateKey => {
         val price             = counter.price
-        val amount            = math.min(submitted.amount, counter.amount)
+        val amount            = math.min(submitted.executionAmount(counter), counter.amountOfAmountAsset)
         val (buy, sell)       = Order.splitByType(submitted.order, counter.order)
         val (buyFee, sellFee) = calculateMatcherFee(buy, sell, amount: Long)
-        ExchangeTransaction.create(matcherPrivateKey, buy, sell, price, amount, buyFee, sellFee, settings.orderMatchTxFee, getTimestamp)
+        (buy, sell) match {
+          case (buy: OrderV1, sell: OrderV1) =>
+            ExchangeTransactionV1.create(matcherPrivateKey, buy, sell, price, amount, buyFee, sellFee, settings.orderMatchTxFee, getTimestamp)
+          case _ =>
+            ExchangeTransactionV2.create(matcherPrivateKey, buy, sell, price, amount, buyFee, sellFee, settings.orderMatchTxFee, getTimestamp)
+        }
       })
   }
 

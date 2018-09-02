@@ -6,12 +6,12 @@ import com.wavesplatform.{NoShrink, TransactionGen}
 import org.scalacheck.Gen
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.{Matchers, PropSpec}
-import scorex.account.Address
-import scorex.lagonaki.mocks.TestBlock
-import scorex.settings.TestFunctionalitySettings
-import scorex.transaction.GenesisTransaction
-import scorex.transaction.lease.{LeaseCancelTransaction, LeaseTransaction}
-import scorex.transaction.transfer._
+import com.wavesplatform.account.Address
+import com.wavesplatform.settings.TestFunctionalitySettings
+import com.wavesplatform.lagonaki.mocks.TestBlock
+import com.wavesplatform.transaction.GenesisTransaction
+import com.wavesplatform.transaction.lease.{LeaseCancelTransaction, LeaseTransaction}
+import com.wavesplatform.transaction.transfer._
 
 class LeaseTransactionsDiffTest extends PropSpec with PropertyChecks with Matchers with TransactionGen with NoShrink {
 
@@ -27,7 +27,7 @@ class LeaseTransactionsDiffTest extends PropSpec with PropertyChecks with Matche
       master    <- accountGen
       recipient <- accountGen suchThat (_ != master)
       ts        <- positiveIntGen
-      genesis: GenesisTransaction = GenesisTransaction.create(master, ENOUGH_AMT, ts).right.get
+      genesis: GenesisTransaction = GenesisTransaction.create(master, ENOUGH_AMT, ts).explicitGet()
       (lease, unlease) <- leaseAndCancelGeneratorP(master, recipient, master)
     } yield (genesis, lease, unlease)
 
@@ -40,8 +40,6 @@ class LeaseTransactionsDiffTest extends PropSpec with PropertyChecks with Matche
             total(totalPortfolioDiff.lease) shouldBe 0
             totalPortfolioDiff.effectiveBalance shouldBe 0
             totalPortfolioDiff.assets.values.foreach(_ shouldBe 0)
-
-//        totalDiff.snapshots(lease.recipient.asInstanceOf[Address]) shouldBe Map(2 -> Snapshot(0, 0, lease.amount))
         }
 
         assertDiffAndState(Seq(TestBlock.create(Seq(genesis, lease))), TestBlock.create(Seq(leaseCancel))) {
@@ -51,11 +49,6 @@ class LeaseTransactionsDiffTest extends PropSpec with PropertyChecks with Matche
             total(totalPortfolioDiff.lease) shouldBe 0
             totalPortfolioDiff.effectiveBalance shouldBe 0
             totalPortfolioDiff.assets.values.foreach(_ shouldBe 0)
-
-//        totalDiff.snapshots(lease.recipient.asInstanceOf[Address]) shouldBe Map(2 -> Snapshot(1, 0, 0))
-
-//        newState.accountPortfolio(lease.sender).leaseInfo shouldBe LeaseInfo.empty
-//        newState.accountPortfolio(lease.recipient.asInstanceOf[Address]).leaseInfo shouldBe LeaseInfo.empty
         }
     }
   }
@@ -64,7 +57,7 @@ class LeaseTransactionsDiffTest extends PropSpec with PropertyChecks with Matche
     master   <- accountGen
     recpient <- accountGen suchThat (_ != master)
     ts       <- timestampGen
-    genesis: GenesisTransaction = GenesisTransaction.create(master, ENOUGH_AMT, ts).right.get
+    genesis: GenesisTransaction = GenesisTransaction.create(master, ENOUGH_AMT, ts).explicitGet()
     (lease, unlease) <- leaseAndCancelGeneratorP(master, recpient, master)
     fee2             <- smallFeeGen
     unlease2         <- createLeaseCancel(master, lease.id(), fee2, ts + 1)
@@ -98,7 +91,7 @@ class LeaseTransactionsDiffTest extends PropSpec with PropertyChecks with Matche
       recipient <- accountGen suchThat (_ != master)
       forward   <- accountGen suchThat (!Set(master, recipient).contains(_))
       ts        <- positiveIntGen
-      genesis: GenesisTransaction = GenesisTransaction.create(master, ENOUGH_AMT, ts).right.get
+      genesis: GenesisTransaction = GenesisTransaction.create(master, ENOUGH_AMT, ts).explicitGet()
       (lease, _)        <- leaseAndCancelGeneratorP(master, recipient, master)
       (leaseForward, _) <- leaseAndCancelGeneratorP(recipient, forward, recipient)
     } yield (genesis, lease, leaseForward)
@@ -119,8 +112,8 @@ class LeaseTransactionsDiffTest extends PropSpec with PropertyChecks with Matche
       other     <- accountGen suchThat (_ != recipient)
       unleaser = if (unleaseByRecipient) recipient else other
       ts <- timestampGen
-      genesis: GenesisTransaction  = GenesisTransaction.create(master, ENOUGH_AMT, ts).right.get
-      genesis2: GenesisTransaction = GenesisTransaction.create(unleaser, ENOUGH_AMT, ts).right.get
+      genesis: GenesisTransaction  = GenesisTransaction.create(master, ENOUGH_AMT, ts).explicitGet()
+      genesis2: GenesisTransaction = GenesisTransaction.create(unleaser, ENOUGH_AMT, ts).explicitGet()
       (lease, _)              <- leaseAndCancelGeneratorP(master, recipient, master)
       fee2                    <- smallFeeGen
       unleaseOtherOrRecipient <- createLeaseCancel(unleaser, lease.id(), fee2, ts + 1)

@@ -1,7 +1,8 @@
 package com.wavesplatform.state.diffs.smart.scenarios
 
-import com.wavesplatform.lang.v1.Terms._
-import com.wavesplatform.lang.v1.{Parser, TypeChecker}
+import com.wavesplatform.lang.v1.compiler.Terms._
+import com.wavesplatform.lang.v1.compiler.CompilerV1
+import com.wavesplatform.lang.v1.parser.Parser
 import com.wavesplatform.state._
 import com.wavesplatform.state.diffs._
 import com.wavesplatform.state.diffs.smart._
@@ -10,16 +11,16 @@ import com.wavesplatform.{NoShrink, TransactionGen, crypto}
 import org.scalacheck.Gen
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.{Matchers, PropSpec}
-import scorex.account.PublicKeyAccount
-import scorex.lagonaki.mocks.TestBlock
-import scorex.transaction._
-import scorex.transaction.smart.SetScriptTransaction
-import scorex.transaction.smart.script.v1.ScriptV1
-import scorex.transaction.transfer._
+import com.wavesplatform.account.PublicKeyAccount
+import com.wavesplatform.lagonaki.mocks.TestBlock
+import com.wavesplatform.transaction._
+import com.wavesplatform.transaction.smart.SetScriptTransaction
+import com.wavesplatform.transaction.smart.script.v1.ScriptV1
+import com.wavesplatform.transaction.transfer._
 
 class MultiSig2of3Test extends PropSpec with PropertyChecks with Matchers with TransactionGen with NoShrink {
 
-  def multisigTypedExpr(pk0: PublicKeyAccount, pk1: PublicKeyAccount, pk2: PublicKeyAccount): Typed.EXPR = {
+  def multisigTypedExpr(pk0: PublicKeyAccount, pk1: PublicKeyAccount, pk2: PublicKeyAccount): EXPR = {
     val script =
       s"""
          |
@@ -27,15 +28,22 @@ class MultiSig2of3Test extends PropSpec with PropertyChecks with Matchers with T
          |let B = base58'${ByteStr(pk1.publicKey)}'
          |let C = base58'${ByteStr(pk2.publicKey)}'
          |
-         |let AC = if(sigVerify(tx.bodyBytes,tx.proof0,A)) then 1 else 0
-         |let BC = if(sigVerify(tx.bodyBytes,tx.proof1,B)) then 1 else 0
-         |let CC = if(sigVerify(tx.bodyBytes,tx.proof2,C)) then 1 else 0
+         |match tx {
+         |  case _: Order => false
+         |  case tx: Transaction       => {
+         |    let proofs = tx.proofs
+         |    let AC     = if(sigVerify(tx.bodyBytes,proofs[0],A)) then 1 else 0
+         |    let BC     = if(sigVerify(tx.bodyBytes,proofs[1],B)) then 1 else 0
+         |    let CC     = if(sigVerify(tx.bodyBytes,proofs[2],C)) then 1 else 0
          |
-         | AC + BC+ CC >= 2
+         |    AC + BC+ CC >= 2
+         |  }
+         |}
          |
       """.stripMargin
     val untyped = Parser(script).get.value
-    TypeChecker(dummyTypeCheckerContext, untyped).explicitGet()
+    assert(untyped.size == 1)
+    CompilerV1(dummyCompilerContext, untyped.head).explicitGet()._1
   }
 
   val preconditionsAndTransfer: Gen[(GenesisTransaction, SetScriptTransaction, TransferTransactionV2, Seq[ByteStr])] = for {
@@ -46,7 +54,7 @@ class MultiSig2of3Test extends PropSpec with PropertyChecks with Matchers with T
     s2        <- accountGen
     recepient <- accountGen
     ts        <- positiveIntGen
-    genesis = GenesisTransaction.create(master, ENOUGH_AMT, ts).right.get
+    genesis = GenesisTransaction.create(master, ENOUGH_AMT, ts).explicitGet()
     setSctipt <- selfSignedSetScriptTransactionGenP(master, ScriptV1(multisigTypedExpr(s0, s1, s2)).explicitGet())
     amount    <- positiveLongGen
     fee       <- smallFeeGen
@@ -65,7 +73,7 @@ class MultiSig2of3Test extends PropSpec with PropertyChecks with Matchers with T
   property("2 of 3 multisig") {
 
     forAll(preconditionsAndTransfer) {
-      case ((genesis, script, transfer, sigs)) =>
+      case (genesis, script, transfer, sigs) =>
         val validProofs = Seq(
           transfer.copy(proofs = Proofs.create(Seq(sigs(0), sigs(1))).explicitGet()),
           transfer.copy(proofs = Proofs.create(Seq(ByteStr.empty, sigs(1), sigs(2))).explicitGet())

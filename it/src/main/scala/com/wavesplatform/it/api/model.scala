@@ -37,7 +37,12 @@ object CompiledScript {
   implicit val compiledScriptFormat: Format[CompiledScript] = Json.format
 }
 
-case class FullAssetInfo(assetId: String, balance: Long, reissuable: Boolean, quantity: Long)
+case class FullAssetInfo(assetId: String,
+                         balance: Long,
+                         reissuable: Boolean,
+                         minSponsoredAssetFee: Option[Long],
+                         sponsorBalance: Option[Long],
+                         quantity: Long)
 object FullAssetInfo {
   implicit val fullAssetInfoFormat: Format[FullAssetInfo] = Json.format
 }
@@ -47,14 +52,74 @@ object FullAssetsInfo {
   implicit val fullAssetsInfoFormat: Format[FullAssetsInfo] = Json.format
 }
 
+case class AssetInfo(assetId: String,
+                     issueHeight: Int,
+                     issueTimestamp: Long,
+                     issuer: String,
+                     name: String,
+                     description: String,
+                     decimals: Int,
+                     reissuable: Boolean,
+                     quantity: Long,
+                     minSponsoredAssetFee: Option[Long])
+object AssetInfo {
+  implicit val AssetInfoFormat: Format[AssetInfo] = Json.format
+}
+
 case class Transaction(`type`: Int, id: String, fee: Long, timestamp: Long, sender: Option[String])
 object Transaction {
   implicit val transactionFormat: Format[Transaction] = Json.format
 }
 
-case class TransactionInfo(`type`: Int, id: String, fee: Long, timestamp: Long, sender: Option[String], height: Int)
+case class TransactionInfo(`type`: Int,
+                           id: String,
+                           fee: Long,
+                           timestamp: Long,
+                           sender: Option[String],
+                           height: Int,
+                           minSponsoredAssetFee: Option[Long],
+                           recipient: Option[String])
 object TransactionInfo {
   implicit val format: Format[TransactionInfo] = Json.format
+}
+
+case class OrderInfo(id: String,
+                     sender: String,
+                     senderPublicKey: String,
+                     matcherPublicKey: String,
+                     assetPair: AssetPairResponse,
+                     orderType: String,
+                     price: Long,
+                     amount: Long,
+                     timestamp: Long,
+                     expiration: Long,
+                     matcherFee: Long,
+                     signature: String)
+object OrderInfo {
+  implicit val transactionFormat: Format[OrderInfo] = Json.format
+}
+
+case class AssetPairResponse(amountAsset: Option[String], priceAsset: Option[String])
+object AssetPairResponse {
+  implicit val pairResponseFormat: Format[AssetPairResponse] = Json.format
+}
+
+case class ExchangeTransaction(`type`: Int,
+                               id: String,
+                               sender: String,
+                               senderPublicKey: String,
+                               fee: Long,
+                               timestamp: Long,
+                               signature: String,
+                               order1: OrderInfo,
+                               order2: OrderInfo,
+                               price: Long,
+                               amount: Long,
+                               buyMatcherFee: Long,
+                               sellMatcherFee: Long,
+                               height: Option[Int])
+object ExchangeTransaction {
+  implicit val transactionFormat: Format[ExchangeTransaction] = Json.format
 }
 
 case class Block(signature: String,
@@ -74,7 +139,7 @@ case class BlockHeaders(signature: String,
                         generator: String,
                         transactionCount: Int,
                         blocksize: Int,
-                        features: Set[Short])
+                        features: Option[Set[Short]])
 object BlockHeaders {
   implicit val blockHeadersFormat: Format[BlockHeaders] = Json.format
 }
@@ -89,7 +154,26 @@ object MatcherResponse {
   implicit val matcherResponseFormat: Format[MatcherResponse] = Json.format
 }
 
-case class MatcherStatusResponse(status: String)
+case class MarketDataInfo(matcherPublicKey: String, markets: Seq[MarketData])
+object MarketDataInfo {
+  implicit val marketDataInfoResponseFormat: Format[MarketDataInfo] = Json.format
+}
+
+case class AssetDecimalsInfo(decimals: Byte)
+object AssetDecimalsInfo {
+  implicit val assetDecimalsInfoResponseFormat: Format[AssetDecimalsInfo] = Json.format
+}
+
+case class MarketData(amountAssetName: String,
+                      priceAssetName: String,
+                      created: Long,
+                      amountAssetInfo: Option[AssetDecimalsInfo],
+                      priceAssetInfo: Option[AssetDecimalsInfo])
+object MarketData {
+  implicit val marketData: Format[MarketData] = Json.format
+}
+
+case class MatcherStatusResponse(status: String, filledAmount: Option[Long])
 object MatcherStatusResponse {
   implicit val matcherStatusResponseFormat: Format[MatcherStatusResponse] = Json.format
 }
@@ -119,6 +203,16 @@ object OrderBookResponse {
   implicit val orderBookResponseFormat: Format[OrderBookResponse] = Json.format
 }
 
+case class MarketStatusResponse(lastPrice: Option[Long],
+                                lastSide: Option[String],
+                                bid: Option[Long],
+                                bidAmount: Option[Long],
+                                ask: Option[Long],
+                                askAmount: Option[Long])
+object MarketStatusResponse {
+  implicit val marketResponseFormat: Format[MarketStatusResponse] = Json.format
+}
+
 case class DebugInfo(stateHeight: Long, stateHash: Long)
 object DebugInfo {
   implicit val debugInfoFormat: Format[DebugInfo] = Json.format
@@ -132,6 +226,11 @@ object BlacklistedPeer {
 case class State(address: String, miningBalance: Long, timestamp: Long)
 object State {
   implicit val StateFormat: Format[State] = Json.format
+}
+
+case class FeeInfo(feeAssetId: Option[String], feeAmount: Long)
+object FeeInfo {
+  implicit val format: Format[FeeInfo] = Json.format
 }
 
 // Obsolete payment request

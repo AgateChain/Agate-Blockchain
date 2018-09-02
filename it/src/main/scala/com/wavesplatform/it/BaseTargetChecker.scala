@@ -1,34 +1,32 @@
 package com.wavesplatform.it
 
-import java.time.Instant
-
 import com.typesafe.config.ConfigFactory.{defaultApplication, defaultReference}
+import com.wavesplatform.consensus.PoSSelector
 import com.wavesplatform.db.openDB
 import com.wavesplatform.history.StorageFactory
 import com.wavesplatform.settings._
 import com.wavesplatform.state.{ByteStr, EitherExt2}
 import net.ceedubs.ficus.Ficus._
-import scorex.account.PublicKeyAccount
-import scorex.block.Block
-import scorex.transaction.PoSCalc
-import scorex.utils.NTP
+import com.wavesplatform.account.PublicKeyAccount
+import com.wavesplatform.utils.NTP
+import com.wavesplatform.block.Block
 
 object BaseTargetChecker {
   def main(args: Array[String]): Unit = {
-    val startTs = System.currentTimeMillis()
-    val docker  = Docker(getClass)
+    val docker = Docker(getClass)
     val sharedConfig = docker.genesisOverride
       .withFallback(docker.configTemplate)
       .withFallback(defaultApplication())
       .withFallback(defaultReference())
       .resolve()
     val settings     = WavesSettings.fromConfig(sharedConfig)
-    val fs           = settings.blockchainSettings.functionalitySettings
     val genesisBlock = Block.genesis(settings.blockchainSettings.genesisSettings).explicitGet()
-    val db           = openDB("/tmp/tmp-db", 1024)
+    val db           = openDB("/tmp/tmp-db")
     val bu           = StorageFactory(settings, db, NTP)
+    val pos          = new PoSSelector(bu, settings.blockchainSettings)
     bu.processBlock(genesisBlock)
 
+<<<<<<< HEAD
     println(s"Genesis TS = ${Instant.ofEpochMilli(genesisBlock.timestamp)}")
 
     val m = NodeConfigs.Default.map(_.withFallback(sharedConfig)).collect {
@@ -40,10 +38,21 @@ object BaseTargetChecker {
           case _              => s"$address: n/a"
         }
 
+=======
+    NodeConfigs.Default.map(_.withFallback(sharedConfig)).collect {
+      case cfg if cfg.as[Boolean]("waves.miner.enable") =>
+        val account   = PublicKeyAccount(cfg.as[ByteStr]("public-key").arr)
+        val address   = account.toAddress
+        val balance   = bu.balance(address, None)
+        val consensus = genesisBlock.consensusData
+        val timeDelay = pos
+          .getValidBlockDelay(bu.height, account.publicKey, consensus.baseTarget, balance)
+          .explicitGet()
+
+        f"$address: ${timeDelay * 1e-3}%10.3f s"
+>>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
     }
 
     docker.close()
-
-    println(m.mkString("\n"))
   }
 }

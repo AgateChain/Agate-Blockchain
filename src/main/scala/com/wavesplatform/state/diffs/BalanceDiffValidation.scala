@@ -1,20 +1,18 @@
 package com.wavesplatform.state.diffs
 
 import cats.implicits._
+import com.wavesplatform.account.Address
 import com.wavesplatform.metrics.Instrumented
 import com.wavesplatform.settings.FunctionalitySettings
 import com.wavesplatform.state.{Blockchain, ByteStr, Diff, LeaseBalance, Portfolio}
-import scorex.account.Address
-import scorex.transaction.Transaction
-import scorex.transaction.ValidationError.AccountBalanceError
-import scorex.utils.ScorexLogging
+import com.wavesplatform.transaction.ValidationError.AccountBalanceError
+import com.wavesplatform.utils.ScorexLogging
 
 import scala.util.{Left, Right}
 
 object BalanceDiffValidation extends ScorexLogging with Instrumented {
 
-  def apply[T <: Transaction](b: Blockchain, currentHeight: Int, fs: FunctionalitySettings)(d: Diff): Either[AccountBalanceError, Diff] = {
-
+  def apply(b: Blockchain, currentHeight: Int, fs: FunctionalitySettings)(d: Diff): Either[AccountBalanceError, Diff] = {
     val changedAccounts = d.portfolios.keySet
 
     val positiveBalanceErrors: Map[Address, String] = changedAccounts
@@ -24,13 +22,26 @@ object BalanceDiffValidation extends ScorexLogging with Instrumented {
 
         val newPortfolio = oldPortfolio.combine(portfolioDiff)
 
+<<<<<<< HEAD
         val err = if (newPortfolio.balance < 0) {
           Some(s"negative Agate balance: $acc, old: ${oldPortfolio.balance}, new: ${newPortfolio.balance}")
         } else if (newPortfolio.assets.values.exists(_ < 0)) {
+=======
+        lazy val negativeBalance          = newPortfolio.balance < 0
+        lazy val negativeAssetBalance     = newPortfolio.assets.values.exists(_ < 0)
+        lazy val negativeEffectiveBalance = newPortfolio.effectiveBalance < 0
+        lazy val leasedMoreThanOwn        = newPortfolio.balance < newPortfolio.lease.out && currentHeight > fs.allowLeasedBalanceTransferUntilHeight
+
+        val err = if (negativeBalance) {
+          Some(s"negative waves balance: $acc, old: ${oldPortfolio.balance}, new: ${newPortfolio.balance}")
+        } else if (negativeAssetBalance) {
+>>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
           Some(s"negative asset balance: $acc, new portfolio: ${negativeAssetsInfo(newPortfolio)}")
-        } else if (newPortfolio.effectiveBalance < 0) {
+        } else if (negativeEffectiveBalance) {
           Some(s"negative effective balance: $acc, old: ${leaseWavesInfo(oldPortfolio)}, new: ${leaseWavesInfo(newPortfolio)}")
-        } else if (newPortfolio.balance < newPortfolio.lease.out && currentHeight > fs.allowLeasedBalanceTransferUntilHeight) {
+        } else if (leasedMoreThanOwn && oldPortfolio.lease.out == newPortfolio.lease.out) {
+          Some(s"$acc trying to spend leased money")
+        } else if (leasedMoreThanOwn) {
           Some(s"leased being more than own: $acc, old: ${leaseWavesInfo(oldPortfolio)}, new: ${leaseWavesInfo(newPortfolio)}")
         } else None
         err.map(acc -> _)

@@ -1,18 +1,18 @@
 package com.wavesplatform.history
 
+import com.wavesplatform._
 import com.wavesplatform.state._
 import com.wavesplatform.state.diffs.ENOUGH_AMT
-import com.wavesplatform._
 import org.scalacheck.Gen
 import org.scalatest._
 import org.scalatest.prop.PropertyChecks
-import scorex.account.PrivateKeyAccount
-import scorex.block.{Block, MicroBlock, SignerData}
-import scorex.consensus.nxt.NxtLikeConsensusBlockData
-import scorex.lagonaki.mocks.TestBlock
-import scorex.transaction.ValidationError.MicroBlockAppendError
-import scorex.transaction.transfer._
-import scorex.transaction.{GenesisTransaction, Transaction}
+import com.wavesplatform.account.PrivateKeyAccount
+import com.wavesplatform.block.{Block, MicroBlock, SignerData}
+import com.wavesplatform.consensus.nxt.NxtLikeConsensusBlockData
+import com.wavesplatform.lagonaki.mocks.TestBlock
+import com.wavesplatform.transaction.ValidationError.GenericError
+import com.wavesplatform.transaction.transfer._
+import com.wavesplatform.transaction.{GenesisTransaction, Transaction}
 
 class BlockchainUpdaterLiquidBlockTest extends PropSpec with PropertyChecks with DomainScenarioDrivenPropertyCheck with Matchers with TransactionGen {
 
@@ -27,7 +27,7 @@ class BlockchainUpdaterLiquidBlockTest extends PropSpec with PropertyChecks with
 
     val prevBlock = unsafeBlock(
       reference = randomSig,
-      txs = Seq(GenesisTransaction.create(richAccount, ENOUGH_AMT, 0).right.get),
+      txs = Seq(GenesisTransaction.create(richAccount, ENOUGH_AMT, 0).explicitGet()),
       signer = TestBlock.defaultSigner,
       version = 3,
       timestamp = 0
@@ -61,7 +61,7 @@ class BlockchainUpdaterLiquidBlockTest extends PropSpec with PropertyChecks with
 
       withClue("All microblocks should not be processed") {
         r match {
-          case Left(e: MicroBlockAppendError) => e.err should include("Limit of txs was reached")
+          case Left(e: GenericError) => e.err should include("Limit of txs was reached")
           case x =>
             val txNumberByMicroBlock = microBlocks.map(_.transactionData.size)
             fail(
@@ -79,7 +79,7 @@ class BlockchainUpdaterLiquidBlockTest extends PropSpec with PropertyChecks with
       feeAmount <- smallFeeGen
       timestamp <- timestampGen
       recipient <- accountGen
-    } yield TransferTransactionV1.selfSigned(None, from, recipient, amount, timestamp, None, feeAmount, Array.empty).right.get
+    } yield TransferTransactionV1.selfSigned(None, from, recipient, amount, timestamp, None, feeAmount, Array.empty).explicitGet()
 
   private def unsafeChainBaseAndMicro(totalRefTo: ByteStr,
                                       base: Seq[Transaction],

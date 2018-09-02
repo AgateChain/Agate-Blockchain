@@ -1,17 +1,17 @@
 package com.wavesplatform.state.diffs
 
 import cats.implicits._
-import com.wavesplatform.state.{LeaseBalance, Portfolio}
+import com.wavesplatform.state.{EitherExt2, LeaseBalance, Portfolio}
 import com.wavesplatform.{NoShrink, TransactionGen}
 import org.scalacheck.Gen
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.{Matchers, PropSpec}
-import scorex.account.Address
-import scorex.lagonaki.mocks.TestBlock
-import scorex.transaction.GenesisTransaction
-import scorex.transaction.ValidationError.GenericError
-import scorex.transaction.assets._
-import scorex.transaction.transfer._
+import com.wavesplatform.account.Address
+import com.wavesplatform.lagonaki.mocks.TestBlock
+import com.wavesplatform.transaction.GenesisTransaction
+import com.wavesplatform.transaction.ValidationError.GenericError
+import com.wavesplatform.transaction.assets._
+import com.wavesplatform.transaction.transfer._
 
 class TransferTransactionDiffTest extends PropSpec with PropertyChecks with Matchers with TransactionGen with NoShrink {
 
@@ -19,7 +19,7 @@ class TransferTransactionDiffTest extends PropSpec with PropertyChecks with Matc
     master    <- accountGen
     recepient <- otherAccountGen(candidate = master)
     ts        <- positiveIntGen
-    genesis: GenesisTransaction = GenesisTransaction.create(master, ENOUGH_AMT, ts).right.get
+    genesis: GenesisTransaction = GenesisTransaction.create(master, ENOUGH_AMT, ts).explicitGet()
     issue1: IssueTransaction <- issueReissueBurnGeneratorP(ENOUGH_AMT, master).map(_._1)
     issue2: IssueTransaction <- issueReissueBurnGeneratorP(ENOUGH_AMT, master).map(_._1)
     maybeAsset               <- Gen.option(issue1)
@@ -54,7 +54,7 @@ class TransferTransactionDiffTest extends PropSpec with PropertyChecks with Matc
       master    <- accountGen
       recepient <- otherAccountGen(master)
       ts        <- positiveIntGen
-      genesis: GenesisTransaction = GenesisTransaction.create(master, ENOUGH_AMT, ts).right.get
+      genesis: GenesisTransaction = GenesisTransaction.create(master, ENOUGH_AMT, ts).explicitGet()
       issue: IssueTransaction      <- issueReissueBurnGeneratorP(ENOUGH_AMT, master).map(_._1)
       feeIssue: IssueTransactionV2 <- smartIssueTransactionGen(master, scriptGen.map(_.some))
       transferV1                   <- transferGeneratorP(master, recepient, issue.id().some, feeIssue.id().some)
