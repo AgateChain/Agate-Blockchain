@@ -47,7 +47,8 @@ class BlacklistSpecification extends FeatureSpec with GivenWhenThen {
 
       Then("Another peer disappear from blacklist")
       assert(!isBlacklisted(address))
-
+   
+      
       And("Another peer became known")
       assert(peerDatabase.knownPeers.contains(address))
     }
