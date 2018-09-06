@@ -35,13 +35,8 @@ val versionSource = Def.task {
 }
 val network = SettingKey[Network]("network")
 network := { Network(sys.props.get("network")) }
-<<<<<<< HEAD
-normalizedName := network.value.name
 name := "Agate"
-=======
-name := "waves"
 normalizedName := s"${name.value}${network.value.packageSuffix}"
->>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
 
 git.useGitDescribe := true
 git.uncommittedSignifier := Some("DIRTY")
