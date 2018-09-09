@@ -21,39 +21,18 @@ inTask(docker)(
       val startWaves     = sourceDirectory.value / "container" / "start-Agate.sh"
 
       val withAspectJ     = Option(System.getenv("WITH_ASPECTJ")).fold(false)(_.toBoolean)
-<<<<<<< HEAD
-      val aspectjAgentUrl = "http://search.maven.org/remotecontent?filepath=org/aspectj/aspectjweaver/1.8.13/aspectjweaver-1.8.13.jar"
-      val yourKitArchive  = "YourKit-JavaProfiler-2017.02-b75.zip"
-
-      def extractYourKitFileCmd(name: String): String =
-        s"""FILE=$$(unzip -l /tmp/$yourKitArchive | grep "$name" | rev | cut -f 1 -d' ' | rev) && \\
-           |unzip -o /tmp/$yourKitArchive -d /tmp/ $$FILE && \\
-           |mv /tmp/$$FILE /opt/Agate/${name.split("/").last}""".stripMargin
-=======
       val aspectjAgentUrl = "http://search.maven.org/remotecontent?filepath=org/aspectj/aspectjweaver/1.9.1/aspectjweaver-1.9.1.jar"
       val yourKitArchive  = "YourKit-JavaProfiler-2018.04-docker.zip"
->>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
 
       new Dockerfile {
         from("anapsix/alpine-java:8_server-jre")
         runRaw("mkdir -p /opt/waves")
 
-<<<<<<< HEAD
-        // Install yourkit
-        runRaw(s"""mkdir -p /opt/Agate/ && \\
-                  |apk update && \\
-                  |apk add --no-cache ca-certificates openssl && \\
-                  |update-ca-certificates && \\
-                  |wget https://www.yourkit.com/download/$yourKitArchive -P /tmp/ && \\
-                  |${extractYourKitFileCmd("linux-x86-64/libyjpagent.so")} && \\
-                  |${extractYourKitFileCmd("yjp-controller-api-redist.jar")} && \\
-=======
         // Install YourKit
         runRaw(s"""apk update && \\
                   |apk add --no-cache openssl ca-certificates && \\
                   |wget https://www.yourkit.com/download/docker/$yourKitArchive -P /tmp/ && \\
                   |unzip /tmp/$yourKitArchive -d /usr/local && \\
->>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
                   |rm /tmp/$yourKitArchive""".stripMargin)
 
         if (withAspectJ) run("wget", "--quiet", aspectjAgentUrl, "-O", "/opt/Agate/aspectjweaver.jar")
