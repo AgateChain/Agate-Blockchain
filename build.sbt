@@ -121,9 +121,6 @@ val batScriptPattern   = "bin/([^.]+)\\.bat".r
 
 inConfig(Universal)(
   Seq(
-<<<<<<< HEAD
-    mappings += (baseDirectory.value / s"Agate-${network.value}.conf" -> "doc/Agate.conf.sample"),
-=======
     mappings += (baseDirectory.value / s"waves-${network.value}.conf" -> "doc/waves.conf.sample"),
     mappings := {
       val scriptSuffix = network.value.packageSuffix
@@ -135,7 +132,6 @@ inConfig(Universal)(
         case other => other
       }
     },
->>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
     javaOptions ++= Seq(
       // -J prefix is required by the bash script
       "-J-server",
