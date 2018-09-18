@@ -26,21 +26,8 @@ object BaseTargetChecker {
     val pos          = new PoSSelector(bu, settings.blockchainSettings)
     bu.processBlock(genesisBlock)
 
-<<<<<<< HEAD
-    println(s"Genesis TS = ${Instant.ofEpochMilli(genesisBlock.timestamp)}")
-
-    val m = NodeConfigs.Default.map(_.withFallback(sharedConfig)).collect {
-      case cfg if cfg.as[Boolean]("Agate.miner.enable") =>
-        val publicKey = PublicKeyAccount(cfg.as[ByteStr]("public-key").arr)
-        val address   = publicKey.toAddress
-        PoSCalc.nextBlockGenerationTime(1, bu, fs, genesisBlock, publicKey) match {
-          case Right((_, ts)) => f"$address: ${(ts - startTs) * 1e-3}%10.3f s"
-          case _              => s"$address: n/a"
-        }
-
-=======
     NodeConfigs.Default.map(_.withFallback(sharedConfig)).collect {
-      case cfg if cfg.as[Boolean]("waves.miner.enable") =>
+      case cfg if cfg.as[Boolean]("Agate.miner.enable") =>
         val account   = PublicKeyAccount(cfg.as[ByteStr]("public-key").arr)
         val address   = account.toAddress
         val balance   = bu.balance(address, None)
@@ -50,7 +37,6 @@ object BaseTargetChecker {
           .explicitGet()
 
         f"$address: ${timeDelay * 1e-3}%10.3f s"
->>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
     }
 
     docker.close()
