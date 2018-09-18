@@ -28,9 +28,7 @@ import org.scalatest.{Inside, Matchers, PropSpec}
 
 class ExchangeTransactionDiffTest extends PropSpec with PropertyChecks with Matchers with TransactionGen with Inside with NoShrink {
 
-<<<<<<< HEAD
-  property("preserves Agate invariant, stores match info, rewards matcher") {
-=======
+
   val fs = TestFunctionalitySettings.Enabled.copy(
     preActivatedFeatures = Map(
       BlockchainFeatures.SmartAccounts.id       -> 0,
@@ -39,8 +37,7 @@ class ExchangeTransactionDiffTest extends PropSpec with PropertyChecks with Matc
     )
   )
 
-  property("preserves waves invariant, stores match info, rewards matcher") {
->>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
+  property("preserves Agate invariant, stores match info, rewards matcher") {
 
     val preconditionsAndExchange: Gen[(GenesisTransaction, GenesisTransaction, IssueTransaction, IssueTransaction, ExchangeTransaction)] = for {
       buyer  <- accountGen
