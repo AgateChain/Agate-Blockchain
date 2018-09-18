@@ -246,13 +246,8 @@ class Docker(suiteConfig: Config = empty, tag: String = "", enableProfiling: Boo
           s"-Dlogback.stdout.level=TRACE -Dlogback.file.level=OFF -DAgate.network.declared-address=$ip:$networkPort "
 
         if (enableProfiling) {
-<<<<<<< HEAD
-          config += s"-agentpath:$ContainerRoot/libyjpagent.so=listen=0.0.0.0:$ProfilerPort," +
-            s"sampling,monitors,sessionname=AgateNode,dir=$ContainerRoot/profiler,logdir=$ContainerRoot "
-=======
           config += s"-agentpath:/usr/local/YourKit-JavaProfiler-2018.04/bin/linux-x86-64/libyjpagent.so=port=$ProfilerPort,listen=all," +
-            s"sampling,monitors,sessionname=WavesNode,dir=$ContainerRoot/profiler,logdir=$ContainerRoot "
->>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
+            s"sampling,monitors,sessionname=AgateNode,dir=$ContainerRoot/profiler,logdir=$ContainerRoot "
         }
 
         val withAspectJ = Option(System.getenv("WITH_ASPECTJ")).fold(false)(_.toBoolean)
