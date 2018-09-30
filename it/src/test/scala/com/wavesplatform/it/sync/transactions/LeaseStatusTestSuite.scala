@@ -13,12 +13,6 @@ class LeaseStatusTestSuite extends BaseTransactionSuite with CancelAfterFailure 
 
   override protected def nodeConfigs: Seq[Config] = Configs
 
-<<<<<<< HEAD
-  private val transferFee   = 0.001.Agate
-  private val leasingAmount = 10.Agate
-
-=======
->>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
   test("verification of leasing status") {
     val createdLeaseTxId = sender.lease(firstAddress, secondAddress, leasingAmount, leasingFee = minFee).id
     nodes.waitForHeightAriseAndTxPresent(createdLeaseTxId)
