@@ -9,14 +9,7 @@ import com.wavesplatform.it.sync._
 import scala.util.Random
 
 class AliasTransactionSuite extends BaseTransactionSuite with TableDrivenPropertyChecks {
-<<<<<<< HEAD
 
-  private val transferFee    = 1.Agate
-  private val leasingFee     = 0.001.Agate
-  private val transferAmount = 1.Agate
-
-=======
->>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
   test("Able to send money to an alias") {
     val alias            = randomAlias()
     val (balance1, eff1) = notMiner.accountBalances(firstAddress)
@@ -105,11 +98,8 @@ class AliasTransactionSuite extends BaseTransactionSuite with TableDrivenPropert
     val aliasFee  = calcAliasFee(thirdAddress, thirdAddressAlias)
     val aliasFull = fullAliasByAddress(thirdAddress, thirdAddressAlias)
     //lease maximum value, to pass next thirdAddress
-<<<<<<< HEAD
-    val leasingAmount = balance1 - leasingFee - 0.5.Agate
-=======
-    val leasingAmount = balance1 - minFee - 0.5.waves
->>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
+
+    val leasingAmount = balance1 - minFee - 0.5.Agate
 
     val leasingTx = sender.lease(firstAddress, aliasFull, leasingAmount, minFee).id
     nodes.waitForHeightAriseAndTxPresent(leasingTx)
