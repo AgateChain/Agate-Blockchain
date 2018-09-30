@@ -9,14 +9,7 @@ import com.wavesplatform.it.sync._
 
 class LeasingTransactionsSuite extends BaseTransactionSuite with CancelAfterFailure {
 
-<<<<<<< HEAD
-  private val defaultFee    = 2.Agate
-  private val leasingAmount = 5.Agate
-
   test("leasing Agate decreases lessor's eff.b. and increases lessee's eff.b.; lessor pays fee") {
-=======
-  test("leasing waves decreases lessor's eff.b. and increases lessee's eff.b.; lessor pays fee") {
->>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
     val (balance1, eff1) = notMiner.accountBalances(firstAddress)
     val (balance2, eff2) = notMiner.accountBalances(secondAddress)
 
@@ -33,11 +26,7 @@ class LeasingTransactionsSuite extends BaseTransactionSuite with CancelAfterFail
     val (balance2, eff2) = notMiner.accountBalances(secondAddress)
 
     //secondAddress effective balance more than general balance
-<<<<<<< HEAD
-    assertBadRequestAndResponse(sender.lease(secondAddress, firstAddress, balance2 + 1.Agate, defaultFee), "Reason: Cannot lease more than own")
-=======
-    assertBadRequestAndResponse(sender.lease(secondAddress, firstAddress, balance2 + 1.waves, minFee), "Reason: Cannot lease more than own")
->>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
+    assertBadRequestAndResponse(sender.lease(secondAddress, firstAddress, balance2 + 1.Agate, minFee), "Reason: Cannot lease more than own")
     nodes.waitForHeightArise()
 
     notMiner.assertBalances(firstAddress, balance1, eff1)
@@ -130,11 +119,7 @@ class LeasingTransactionsSuite extends BaseTransactionSuite with CancelAfterFail
 
   test("can not make leasing without having enough your Agate to self") {
     val (balance1, eff1) = notMiner.accountBalances(firstAddress)
-<<<<<<< HEAD
-    assertBadRequestAndResponse(sender.lease(firstAddress, firstAddress, balance1 + 1.Agate, defaultFee), "Transaction to yourself")
-=======
-    assertBadRequestAndResponse(sender.lease(firstAddress, firstAddress, balance1 + 1.waves, minFee), "Transaction to yourself")
->>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
+    assertBadRequestAndResponse(sender.lease(firstAddress, firstAddress, balance1 + 1.Agate, minFee), "Transaction to yourself")
     nodes.waitForHeightArise()
 
     notMiner.assertBalances(firstAddress, balance1, eff1)
