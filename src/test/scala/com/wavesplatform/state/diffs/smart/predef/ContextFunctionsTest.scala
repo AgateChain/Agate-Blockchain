@@ -6,6 +6,9 @@ import com.wavesplatform.lang.v1.parser.Parser
 import com.wavesplatform.state._
 import com.wavesplatform.state.diffs.smart.smartEnabledFS
 import com.wavesplatform.state.diffs.{ENOUGH_AMT, assertDiffAndState}
+import com.wavesplatform.transaction.GenesisTransaction
+import com.wavesplatform.transaction.smart.SetScriptTransaction
+import com.wavesplatform.transaction.smart.script.v1.ScriptV1
 import com.wavesplatform.utils.{Base58, dummyCompilerContext}
 import com.wavesplatform.{NoShrink, TransactionGen}
 import org.scalatest.prop.PropertyChecks
@@ -36,11 +39,14 @@ class ContextFunctionsTest extends PropSpec with PropertyChecks with Matchers wi
     dataTransaction <- compactDataTransactionGen(recipient)
     transfer        <- transferGeneratorP(ts, master, recipient.toAddress, 100000000L)
 
-    untypedScript = {
-      val r = Parser(scriptWithAllFunctions(dataTransaction, transfer)).get.value
-      assert(r.size == 1)
-      r.head
-    }
+    untypedScript <- Gen
+      .choose(1, 3)
+      .map {
+        case 1 => scriptWithPureFunctions(dataTransaction, transfer)
+        case 2 => scriptWithWavesFunctions(dataTransaction, transfer)
+        case 3 => scriptWithCryptoFunctions
+      }
+      .map(x => Parser(x).get.value)
 
     typedScript = {
       val compilerScript = CompilerV1(dummyCompilerContext, untypedScript).explicitGet()._1
@@ -52,7 +58,7 @@ class ContextFunctionsTest extends PropSpec with PropertyChecks with Matchers wi
 
   property("validation of all functions from contexts") {
     forAll(preconditionsAndPayments) {
-      case ((genesis, setScriptTransaction, dataTransaction, transfer)) =>
+      case (genesis, setScriptTransaction, dataTransaction, transfer) =>
         assertDiffAndState(smartEnabledFS) { append =>
           append(genesis).explicitGet()
           append(Seq(setScriptTransaction, dataTransaction)).explicitGet()
@@ -63,7 +69,7 @@ class ContextFunctionsTest extends PropSpec with PropertyChecks with Matchers wi
 
   property("reading from data transaction array by key") {
     forAll(preconditionsAndPayments) {
-      case ((_, _, tx, _)) =>
+      case (_, _, tx, _) =>
         val int  = tx.data(0)
         val bool = tx.data(1)
         val bin  = tx.data(2)
@@ -146,7 +152,7 @@ class ContextFunctionsTest extends PropSpec with PropertyChecks with Matchers wi
         val outOfBounds = runScript[Boolean](
           s"""
              |match tx {
-             | case tx: DataTransaction => isDefined(getInteger(tx.data, $badIndex))
+             | case d: DataTransaction => isDefined(getInteger(d.data, $badIndex))
              | case _ => false
              |}
              |""".stripMargin,

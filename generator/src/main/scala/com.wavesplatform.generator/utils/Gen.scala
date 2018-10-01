@@ -2,17 +2,44 @@ package com.wavesplatform.generator.utils
 
 import java.util.concurrent.ThreadLocalRandom
 
+import com.wavesplatform.account.{Address, PrivateKeyAccount}
 import com.wavesplatform.generator.utils.Implicits._
 import com.wavesplatform.state.{BinaryDataEntry, BooleanDataEntry, ByteStr, DataEntry, IntegerDataEntry, StringDataEntry}
-import com.wavesplatform.account.{Address, PrivateKeyAccount}
 import com.wavesplatform.transaction.smart.script.{Script, ScriptCompiler}
 import com.wavesplatform.transaction.transfer.MassTransferTransaction.ParsedTransfer
 import com.wavesplatform.transaction.transfer._
 import com.wavesplatform.transaction.{Proofs, Transaction}
+import com.wavesplatform.utils.LoggerFacade
+import org.slf4j.LoggerFactory
 import scorex.crypto.signatures.Curve25519._
 
 object Gen {
   private def random = ThreadLocalRandom.current
+
+  val log = LoggerFacade(LoggerFactory.getLogger("Gen"))
+
+  def script(complexity: Boolean = true): Script = {
+    val s = if (complexity) s"""
+                               |${(for (b <- 1 to 10) yield {
+                                 s"let a$b = blake2b256(base58'') != base58'' && keccak256(base58'') != base58'' && sha256(base58'') != base58'' && sigVerify(base58'333', base58'123', base58'567')"
+                               }).mkString("\n")}
+                               |
+                               |${(for (b <- 1 to 10) yield { s"a$b" }).mkString("&&")} || true
+       """.stripMargin
+    else
+      s"""
+        |${recString(10)} || true
+      """.stripMargin
+
+    val script = ScriptCompiler(s).explicitGet()
+
+    script._1
+  }
+
+  def recString(n: Int): String =
+    if (n <= 1) "true"
+    else
+      s"if (${recString(n - 1)}) then true else false"
 
   def oracleScript(oracle: PrivateKeyAccount, data: Set[DataEntry[_]]): Script = {
     val conditions =
@@ -72,7 +99,7 @@ object Gen {
 
     val (script, _) = ScriptCompiler(src)
       .explicitGet()
-
+    log.info(s"${script.text}")
     script
   }
 

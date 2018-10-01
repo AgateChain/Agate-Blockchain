@@ -26,6 +26,9 @@ import scala.collection.mutable.ArrayBuffer
 import scala.collection.{immutable, mutable}
 
 object LevelDBWriter {
+
+  val MAX_DEPTH = 2000
+
   private def loadLeaseStatus(db: ReadOnlyDB, leaseId: ByteStr): Boolean =
     db.get(Keys.leaseStatusHistory(leaseId)).headOption.fold(false)(h => db.get(Keys.leaseStatus(leaseId)(h)))
 
@@ -124,6 +127,8 @@ class LevelDBWriter(writableDB: DB, fs: FunctionalitySettings, val maxCacheSize:
     }
   }
 
+  override def carryFee: Long = readOnly(_.get(Keys.carryFee(height)))
+
   override def accountData(address: Address): AccountDataInfo = readOnly { db =>
     AccountDataInfo((for {
       addressId <- addressId(address).toSeq
@@ -193,6 +198,7 @@ class LevelDBWriter(writableDB: DB, fs: FunctionalitySettings, val maxCacheSize:
   }
 
   override protected def doAppend(block: Block,
+                                  carry: Long,
                                   newAddresses: Map[Address, BigInt],
                                   wavesBalances: Map[BigInt, Long],
                                   assetBalances: Map[BigInt, Map[ByteStr, Long]],
@@ -219,7 +225,7 @@ class LevelDBWriter(writableDB: DB, fs: FunctionalitySettings, val maxCacheSize:
       rw.put(Keys.idToAddress(id), address)
     }
 
-    val threshold = height - 2000
+    val threshold = height - MAX_DEPTH
 
     val newAddressesForWaves = ArrayBuffer.empty[BigInt]
     val updatedBalanceAddresses = for ((addressId, balance) <- wavesBalances) yield {
@@ -351,6 +357,9 @@ class LevelDBWriter(writableDB: DB, fs: FunctionalitySettings, val maxCacheSize:
       expiredKeys ++= updateHistory(rw, Keys.sponsorshipHistory(assetId), threshold, Keys.sponsorship(assetId))
     }
 
+    rw.put(Keys.carryFee(height), carry)
+    expiredKeys ++= updateHistory(rw, Keys.carryFeeHistory, threshold, Keys.carryFee)
+
     rw.put(Keys.transactionIdsAtHeight(height), transactions.keys.toSeq)
 
     expiredKeys.foreach(rw.delete)
@@ -447,8 +456,8 @@ class LevelDBWriter(writableDB: DB, fs: FunctionalitySettings, val maxCacheSize:
 
                 case tx: CreateAliasTransaction => rw.delete(Keys.addressIdOfAlias(tx.alias))
                 case tx: ExchangeTransaction =>
-                  ordersToInvalidate += rollbackOrderFill(rw, ByteStr(tx.buyOrder.id()), currentHeight)
-                  ordersToInvalidate += rollbackOrderFill(rw, ByteStr(tx.sellOrder.id()), currentHeight)
+                  ordersToInvalidate += rollbackOrderFill(rw, tx.buyOrder.id(), currentHeight)
+                  ordersToInvalidate += rollbackOrderFill(rw, tx.sellOrder.id(), currentHeight)
               }
             }
 
@@ -463,6 +472,9 @@ class LevelDBWriter(writableDB: DB, fs: FunctionalitySettings, val maxCacheSize:
 
           rw.delete(Keys.blockAt(currentHeight))
           rw.delete(Keys.heightOf(discardedBlock.uniqueId))
+
+          rw.delete(Keys.carryFee(currentHeight))
+          rw.filterHistory(Keys.carryFeeHistory, currentHeight)
 
           if (activatedFeatures.get(BlockchainFeatures.DataTransaction.id).contains(currentHeight)) {
             DisableHijackedAliases.revert(rw)

@@ -1,6 +1,7 @@
 package com.wavesplatform.utx
 
 import com.typesafe.config.ConfigFactory
+import com.wavesplatform._
 import com.wavesplatform.account.{Address, PrivateKeyAccount, PublicKeyAccount}
 import com.wavesplatform.block.Block
 import com.wavesplatform.features.BlockchainFeatures
@@ -13,15 +14,13 @@ import com.wavesplatform.settings._
 import com.wavesplatform.state.diffs._
 import com.wavesplatform.state.{ByteStr, EitherExt2, _}
 import com.wavesplatform.transaction.ValidationError.SenderIsBlacklisted
-import com.wavesplatform.transaction.assets.IssueTransactionV1
 import com.wavesplatform.transaction.smart.SetScriptTransaction
 import com.wavesplatform.transaction.smart.script.Script
 import com.wavesplatform.transaction.smart.script.v1.ScriptV1
 import com.wavesplatform.transaction.transfer.MassTransferTransaction.ParsedTransfer
 import com.wavesplatform.transaction.transfer._
-import com.wavesplatform.transaction.{FeeCalculator, GenesisTransaction, Transaction}
+import com.wavesplatform.transaction.{FeeCalculator, Transaction}
 import com.wavesplatform.utils.Time
-import com.wavesplatform._
 import org.scalacheck.Gen
 import org.scalacheck.Gen._
 import org.scalamock.scalatest.MockFactory
@@ -32,15 +31,6 @@ import scala.concurrent.duration._
 
 class UtxPoolSpecification extends FreeSpec with Matchers with MockFactory with PropertyChecks with TransactionGen with NoShrink with WithDB {
 
-  private val calculatorSettings = FeesSettings(
-    Seq(
-      GenesisTransaction,
-      IssueTransactionV1,
-      TransferTransactionV1,
-      MassTransferTransaction,
-      SetScriptTransaction
-    ).map(_.typeId.toInt -> List(FeeSettings("WAVES", 0))).toMap
-  )
   import CommonValidation.{ScriptExtraFee => extraFee}
 
   private def mkBlockchain(senderAccount: Address, senderBalance: Long) = {
@@ -57,7 +47,6 @@ class UtxPoolSpecification extends FreeSpec with Matchers with MockFactory with 
           )),
         genesisSettings
       ),
-      feesSettings = calculatorSettings,
       featuresSettings = origSettings.featuresSettings.copy(autoShutdownOnUnsupportedFeature = false)
     )
 
@@ -82,16 +71,19 @@ class UtxPoolSpecification extends FreeSpec with Matchers with MockFactory with 
       .label("transferWithRecipient")
 
   private def massTransferWithRecipients(sender: PrivateKeyAccount, recipients: List[PublicKeyAccount], maxAmount: Long, time: Time) = {
+    import FeeCalculator.FeeConstants
+
     val amount    = maxAmount / (recipients.size + 1)
     val transfers = recipients.map(r => ParsedTransfer(r.toAddress, amount))
     val txs = for {
       version <- Gen.oneOf(MassTransferTransaction.supportedVersions.toSeq)
-      fee     <- chooseNum(extraFee, amount)
+      minFee = FeeConstants(TransferTransaction.typeId) + FeeConstants(MassTransferTransaction.typeId) * transfers.size
+      fee <- chooseNum(minFee, amount)
     } yield MassTransferTransaction.selfSigned(version, None, sender, transfers, time.getTimestamp(), fee, Array.empty[Byte]).explicitGet()
     txs.label("transferWithRecipient")
   }
 
-  private def mkCalculator(blockchain: Blockchain) = new FeeCalculator(calculatorSettings, blockchain)
+  private def mkCalculator(blockchain: Blockchain) = new FeeCalculator(blockchain)
 
   private val stateGen = for {
     sender        <- accountGen.label("sender")
@@ -116,7 +108,7 @@ class UtxPoolSpecification extends FreeSpec with Matchers with MockFactory with 
         bcu,
         mkCalculator(bcu),
         FunctionalitySettings.TESTNET,
-        UtxSettings(10, 10.minutes, Set.empty, Set.empty, 5.minutes)
+        UtxSettings(10, 10.minutes, Set.empty, Set.empty, 5.minutes, allowTransactionsFromSmartAccounts = true)
       )
     val amountPart = (senderBalance - fee) / 2 - fee
     val txs        = for (_ <- 1 to n) yield createWavesTransfer(sender, recipient, amountPart, fee, time.getTimestamp()).explicitGet()
@@ -133,7 +125,7 @@ class UtxPoolSpecification extends FreeSpec with Matchers with MockFactory with 
             bcu,
             mkCalculator(bcu),
             FunctionalitySettings.TESTNET,
-            UtxSettings(10, 1.minute, Set.empty, Set.empty, 5.minutes)
+            UtxSettings(10, 1.minute, Set.empty, Set.empty, 5.minutes, allowTransactionsFromSmartAccounts = true)
           )
         (sender, bcu, utxPool)
     }
@@ -145,7 +137,7 @@ class UtxPoolSpecification extends FreeSpec with Matchers with MockFactory with 
     time = new TestTime()
     txs <- Gen.nonEmptyListOf(transferWithRecipient(sender, recipient, senderBalance / 10, time))
   } yield {
-    val settings = UtxSettings(10, 1.minute, Set.empty, Set.empty, 5.minutes)
+    val settings = UtxSettings(10, 1.minute, Set.empty, Set.empty, 5.minutes, allowTransactionsFromSmartAccounts = true)
     val utxPool  = new UtxPoolImpl(time, bcu, mkCalculator(bcu), FunctionalitySettings.TESTNET, settings)
     txs.foreach(utxPool.putIfNew)
     (sender, bcu, utxPool, time, settings)
@@ -157,7 +149,7 @@ class UtxPoolSpecification extends FreeSpec with Matchers with MockFactory with 
     time = new TestTime()
     txs <- Gen.nonEmptyListOf(transferWithRecipient(sender, recipient, senderBalance / 10, time)) // @TODO: Random transactions
   } yield {
-    val settings = UtxSettings(10, 1.minute, Set(sender.address), Set.empty, 5.minutes)
+    val settings = UtxSettings(10, 1.minute, Set(sender.address), Set.empty, 5.minutes, allowTransactionsFromSmartAccounts = true)
     val utxPool  = new UtxPoolImpl(time, bcu, mkCalculator(bcu), FunctionalitySettings.TESTNET, settings)
     (sender, utxPool, txs)
   }).label("withBlacklisted")
@@ -168,8 +160,9 @@ class UtxPoolSpecification extends FreeSpec with Matchers with MockFactory with 
     time = new TestTime()
     txs <- Gen.nonEmptyListOf(transferWithRecipient(sender, recipient, senderBalance / 10, time)) // @TODO: Random transactions
   } yield {
-    val settings = UtxSettings(txs.length, 1.minute, Set(sender.address), Set(recipient.address), 5.minutes)
-    val utxPool  = new UtxPoolImpl(time, bcu, mkCalculator(bcu), FunctionalitySettings.TESTNET, settings)
+    val settings =
+      UtxSettings(txs.length, 1.minute, Set(sender.address), Set(recipient.address), 5.minutes, allowTransactionsFromSmartAccounts = true)
+    val utxPool = new UtxPoolImpl(time, bcu, mkCalculator(bcu), FunctionalitySettings.TESTNET, settings)
     (sender, utxPool, txs)
   }).label("withBlacklistedAndAllowedByRule")
 
@@ -182,21 +175,23 @@ class UtxPoolSpecification extends FreeSpec with Matchers with MockFactory with 
       txs <- Gen.nonEmptyListOf(massTransferWithRecipients(sender, recipients, senderBalance / 10, time))
     } yield {
       val whitelist: Set[String] = if (allowRecipients) recipients.map(_.address).toSet else Set.empty
-      val settings               = UtxSettings(txs.length, 1.minute, Set(sender.address), whitelist, 5.minutes)
+      val settings               = UtxSettings(txs.length, 1.minute, Set(sender.address), whitelist, 5.minutes, allowTransactionsFromSmartAccounts = true)
       val utxPool                = new UtxPoolImpl(time, bcu, mkCalculator(bcu), FunctionalitySettings.TESTNET, settings)
       (sender, utxPool, txs)
     }).label("massTransferWithBlacklisted")
 
-  private def utxTest(utxSettings: UtxSettings = UtxSettings(20, 5.seconds, Set.empty, Set.empty, 5.minutes), txCount: Int = 10)(
-      f: (Seq[TransferTransactionV1], UtxPool, TestTime) => Unit): Unit = forAll(stateGen, chooseNum(2, txCount).label("txCount")) {
-    case ((sender, senderBalance, bcu), count) =>
-      val time = new TestTime()
+  private def utxTest(utxSettings: UtxSettings =
+                        UtxSettings(20, 5.seconds, Set.empty, Set.empty, 5.minutes, allowTransactionsFromSmartAccounts = true),
+                      txCount: Int = 10)(f: (Seq[TransferTransactionV1], UtxPool, TestTime) => Unit): Unit =
+    forAll(stateGen, chooseNum(2, txCount).label("txCount")) {
+      case ((sender, senderBalance, bcu), count) =>
+        val time = new TestTime()
 
-      forAll(listOfN(count, transfer(sender, senderBalance / 2, time))) { txs =>
-        val utx = new UtxPoolImpl(time, bcu, mkCalculator(bcu), FunctionalitySettings.TESTNET, utxSettings)
-        f(txs, utx, time)
-      }
-  }
+        forAll(listOfN(count, transfer(sender, senderBalance / 2, time))) { txs =>
+          val utx = new UtxPoolImpl(time, bcu, mkCalculator(bcu), FunctionalitySettings.TESTNET, utxSettings)
+          f(txs, utx, time)
+        }
+    }
 
   private val dualTxGen: Gen[(UtxPool, TestTime, Seq[Transaction], FiniteDuration, Seq[Transaction])] =
     for {
@@ -213,7 +208,7 @@ class UtxPoolSpecification extends FreeSpec with Matchers with MockFactory with 
         bcu,
         mkCalculator(bcu),
         FunctionalitySettings.TESTNET,
-        UtxSettings(10, offset.millis, Set.empty, Set.empty, 5.minutes)
+        UtxSettings(10, offset.millis, Set.empty, Set.empty, 5.minutes, allowTransactionsFromSmartAccounts = true)
       )
       (utx, time, tx1, (offset + 1000).millis, tx2)
     }
@@ -239,41 +234,35 @@ class UtxPoolSpecification extends FreeSpec with Matchers with MockFactory with 
       Seq(TestBlock.create(ts + 1, lastBlockId, Seq(setScript)))
     }
 
-  private val withScriptedAccount: Gen[(PrivateKeyAccount, Long, UtxPoolImpl, Long)] = for {
-    (sender, senderBalance, bcu) <- stateGen
-    preconditions                <- preconditionsGen(bcu.lastBlockId.get, sender)
-  } yield {
-    val smartAccountsFs = TestFunctionalitySettings.Enabled.copy(preActivatedFeatures = Map(BlockchainFeatures.SmartAccounts.id -> 0))
-    preconditions.foreach(b => bcu.processBlock(b).explicitGet())
-    val utx = new UtxPoolImpl(
-      new TestTime(),
-      bcu,
-      mkCalculator(bcu),
-      smartAccountsFs,
-      UtxSettings(10, 1.day, Set.empty, Set.empty, 1.day)
-    )
+  private def withScriptedAccount(scEnabled: Boolean): Gen[(PrivateKeyAccount, Long, UtxPoolImpl, Long)] =
+    for {
+      (sender, senderBalance, bcu) <- stateGen
+      preconditions                <- preconditionsGen(bcu.lastBlockId.get, sender)
+    } yield {
+      val smartAccountsFs = TestFunctionalitySettings.Enabled.copy(preActivatedFeatures = Map(BlockchainFeatures.SmartAccounts.id -> 0))
+      preconditions.foreach(b => bcu.processBlock(b).explicitGet())
+      val utx = new UtxPoolImpl(
+        new TestTime(),
+        bcu,
+        mkCalculator(bcu),
+        smartAccountsFs,
+        UtxSettings(10, 1.day, Set.empty, Set.empty, 1.day, allowTransactionsFromSmartAccounts = scEnabled)
+      )
 
-    (sender, senderBalance, utx, bcu.lastBlock.fold(0L)(_.timestamp))
-  }
+      (sender, senderBalance, utx, bcu.lastBlock.fold(0L)(_.timestamp))
+    }
 
-  private def transactionGen(sender: PrivateKeyAccount, ts: Long, feeAmount: Long): Gen[TransferTransactionV1] = accountGen.map { recipient =>
+  private def transactionV1Gen(sender: PrivateKeyAccount, ts: Long, feeAmount: Long): Gen[TransferTransactionV1] = accountGen.map { recipient =>
     TransferTransactionV1.selfSigned(None, sender, recipient, waves(1), ts, None, feeAmount, Array.emptyByteArray).explicitGet()
   }
 
-  private val notEnoughFeeTxWithScriptedAccount = for {
-    (sender, _, utx, ts) <- withScriptedAccount
-    feeAmount            <- choose[Long](1, extraFee - 1)
-    tx                   <- transactionGen(sender, ts + 1, feeAmount)
-  } yield (utx, tx)
-
-  private val enoughFeeTxWithScriptedAccount = for {
-    (sender, senderBalance, utx, ts) <- withScriptedAccount
-    feeAmount                        <- choose(extraFee, senderBalance / 2)
-    tx                               <- transactionGen(sender, ts + 1, feeAmount)
-  } yield (utx, tx)
+  private def transactionV2Gen(sender: PrivateKeyAccount, ts: Long, feeAmount: Long): Gen[TransferTransactionV2] = accountGen.map { recipient =>
+    TransferTransactionV2.selfSigned(2, None, sender, recipient, waves(1), ts, None, feeAmount, Array.emptyByteArray).explicitGet()
+  }
 
   "UTX Pool" - {
-    "does not add new transactions when full" in utxTest(UtxSettings(1, 5.seconds, Set.empty, Set.empty, 5.minutes)) { (txs, utx, _) =>
+    "does not add new transactions when full" in utxTest(
+      UtxSettings(1, 5.seconds, Set.empty, Set.empty, 5.minutes, allowTransactionsFromSmartAccounts = true)) { (txs, utx, _) =>
       utx.putIfNew(txs.head) shouldBe 'right
       all(txs.tail.map(t => utx.putIfNew(t))) should produce("pool size limit")
     }
@@ -409,16 +398,39 @@ class UtxPoolSpecification extends FreeSpec with Matchers with MockFactory with 
       }
     }
 
-    // See NODE-702
     "smart accounts" - {
-      "not enough fee" in {
-        val (utx, tx) = notEnoughFeeTxWithScriptedAccount.sample.getOrElse(throw new IllegalStateException("NO SAMPLE"))
-        utx.putIfNew(tx) should produce("InsufficientFee")
+      "signed txs from scripted account not allowed" in {
+        val enoughFeeTxWithScriptedAccount =
+          for {
+            (sender, senderBalance, utx, ts) <- withScriptedAccount(true)
+            feeAmount                        <- choose(extraFee, senderBalance / 2)
+            tx                               <- transactionV1Gen(sender, ts + 1, feeAmount)
+          } yield (utx, tx)
+
+        val (utx, tx) = enoughFeeTxWithScriptedAccount.sample.getOrElse(throw new IllegalStateException("NO SAMPLE"))
+        utx.putIfNew(tx) should produce("signature from scripted account")
       }
 
-      "enough fee" in {
-        val (utx, tx) = enoughFeeTxWithScriptedAccount.sample.getOrElse(throw new IllegalStateException("NO SAMPLE"))
-        utx.putIfNew(tx) shouldBe 'right
+      "any transaction from scripted account not allowed if smartAccounts disabled in utx pool" - {
+
+        def enoughFeeTxWithScriptedAccount(version: Int): Gen[(UtxPoolImpl, TransferTransaction)] =
+          for {
+            (sender, senderBalance, utx, ts) <- withScriptedAccount(false)
+            feeAmount                        <- choose(extraFee, senderBalance / 2)
+            tx <- version match {
+              case 1 => transactionV1Gen(sender, ts + 1, feeAmount)
+              case 2 => transactionV2Gen(sender, ts + 1, feeAmount)
+            }
+          } yield (utx, tx)
+
+        "v1" in {
+          val (utx1, tx1) = enoughFeeTxWithScriptedAccount(1).sample.getOrElse(throw new IllegalStateException("NO SAMPLE"))
+          utx1.putIfNew(tx1) shouldBe 'left
+        }
+        "v2" in {
+          val (utx2, tx2) = enoughFeeTxWithScriptedAccount(2).sample.getOrElse(throw new IllegalStateException("NO SAMPLE"))
+          utx2.putIfNew(tx2) should produce("denied from UTX pool")
+        }
       }
     }
   }

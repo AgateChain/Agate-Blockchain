@@ -13,7 +13,6 @@ case class WavesSettings(directory: String,
                          walletSettings: WalletSettings,
                          blockchainSettings: BlockchainSettings,
                          checkpointsSettings: CheckpointsSettings,
-                         feesSettings: FeesSettings,
                          matcherSettings: MatcherSettings,
                          minerSettings: MinerSettings,
                          restAPISettings: RestAPISettings,
@@ -42,7 +41,6 @@ object WavesSettings {
 >>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
     val blockchainSettings      = BlockchainSettings.fromConfig(config)
     val checkpointsSettings     = CheckpointsSettings.fromConfig(config)
-    val feesSettings            = FeesSettings.fromConfig(config)
     val matcherSettings         = MatcherSettings.fromConfig(config)
 <<<<<<< HEAD
     val minerSettings           = config.as[MinerSettings]("Agate.miner")
@@ -63,7 +61,6 @@ object WavesSettings {
       walletSettings,
       blockchainSettings,
       checkpointsSettings,
-      feesSettings,
       matcherSettings,
       minerSettings,
       restAPISettings,

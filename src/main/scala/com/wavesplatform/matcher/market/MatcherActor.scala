@@ -3,14 +3,14 @@ package com.wavesplatform.matcher.market
 import java.util.concurrent.atomic.AtomicReference
 
 import akka.actor.{Actor, ActorRef, Props, Terminated}
-import akka.http.scaladsl.model.{StatusCode, StatusCodes}
+import akka.http.scaladsl.model.StatusCodes
 import akka.pattern.ask
 import akka.persistence.{PersistentActor, RecoveryCompleted, _}
 import akka.util.Timeout
 import cats.implicits._
 import com.google.common.base.Charsets
 import com.wavesplatform.account.Address
-import com.wavesplatform.matcher.api.{BadMatcherResponse, MatcherResponse, StatusCodeMatcherResponse}
+import com.wavesplatform.matcher.api.{MatcherResponse, OrderRejected}
 import com.wavesplatform.matcher.market.OrderBookActor._
 import com.wavesplatform.matcher.model.OrderBook
 import com.wavesplatform.matcher.smart.MatcherScriptRunner
@@ -29,7 +29,6 @@ import io.netty.channel.group.ChannelGroup
 import play.api.libs.json._
 import scorex.utils._
 
-import scala.collection.immutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.util.Try
@@ -92,6 +91,7 @@ class MatcherActor(orderHistory: ActorRef,
   )
 
   def createOrderBook(pair: AssetPair): ActorRef = {
+    log.info(s"Creating order book for $pair")
     val orderBook = createOrderBookActor(pair)
     orderBooks.updateAndGet(_ + (pair -> orderBook))
     tradedPairs += pair -> createMarketData(pair)
@@ -100,15 +100,15 @@ class MatcherActor(orderHistory: ActorRef,
 
   def checkBlacklistedAddress(address: Address)(f: => Unit): Unit = {
     val v = !settings.blacklistedAddresses.contains(address.address) :| s"Invalid Address: ${address.address}"
-    if (v) f else sender() ! StatusCodeMatcherResponse(StatusCodes.Forbidden, v.messages())
+    if (v) f else sender() ! MatcherResponse(StatusCodes.Forbidden, v.messages())
   }
 
   def verify(script: Script, order: Order): Either[ValidationError, Unit] =
     Try {
       MatcherScriptRunner[Boolean](script, order) match {
-        case (ctx, Left(execError)) => Left(ScriptExecutionError(script.text, execError, ctx.letDefs, true))
+        case (ctx, Left(execError)) => Left(ScriptExecutionError(script.text, execError, ctx, true))
         case (ctx, Right(false)) =>
-          Left(TransactionNotAllowedByScript(ctx.letDefs, script.text, true))
+          Left(TransactionNotAllowedByScript(ctx, script.text, true))
         case (_, Right(true)) => Right(())
       }
     }.getOrElse(
@@ -140,7 +140,7 @@ class MatcherActor(orderHistory: ActorRef,
 
     validationResult
       .fold(
-        err => sender() ! StatusCodeMatcherResponse(StatusCodes.Forbidden, err),
+        err => sender() ! MatcherResponse(StatusCodes.Forbidden, err),
         _ => f
       )
   }
@@ -170,9 +170,9 @@ class MatcherActor(orderHistory: ActorRef,
       case Left(e) =>
         sender() ! pairBuilder
           .validateAssetPair(assetPair.reverse)
-          .fold(
-            _ => StatusCodeMatcherResponse(StatusCodes.NotFound, e),
-            _ => StatusCodeMatcherResponse(StatusCodes.Found, e)
+          .fold[MatcherResponse](
+            _ => StatusCodes.NotFound -> e,
+            _ => StatusCodes.Found    -> e
           )
     }
 
@@ -184,17 +184,17 @@ class MatcherActor(orderHistory: ActorRef,
     case GetMarkets =>
       sender() ! GetMarketsResponse(getMatcherPublicKey, tradedPairs.values.toSeq)
 
-    case req: GetMarketStatusRequest =>
+    case req @ GetMarketStatusRequest(pair) =>
       val snd = sender()
-      checkAssetPair(req.assetPair, req) {
+      checkAssetPair(pair, req) {
         context
-          .child(OrderBookActor.name(req.assetPair))
+          .child(OrderBookActor.name(pair))
           .fold {
-            snd ! StatusCodeMatcherResponse(StatusCodes.NotFound, "Market not found")
+            snd ! MatcherResponse(StatusCodes.NotFound, "Market not found")
           } { orderbook =>
             (orderbook ? req)
               .mapTo[GetMarketStatusResponse]
-              .map(snd ! _)
+              .foreach(snd ! _)
           }
       }
 
@@ -212,23 +212,6 @@ class MatcherActor(orderHistory: ActorRef,
         orderBook(ob.assetPair)
           .fold(returnEmptyOrderBook(ob.assetPair))(forwardReq(ob))
         removeOrderBook(ob.assetPair)
-      }
-
-    case x: CancelOrder =>
-      checkAssetPair(x.assetPair, x) {
-        context
-          .child(OrderBookActor.name(x.assetPair))
-          .fold {
-            sender() ! OrderCancelRejected(s"Order '${x.orderId}' is already cancelled or never existed in '${x.assetPair.key}' pair")
-          }(forwardReq(x))
-      }
-
-    case x: ForceCancelOrder =>
-      checkAssetPair(x.assetPair, x) {
-        orderBook(x.assetPair)
-          .fold {
-            sender() ! OrderCancelRejected(s"Order '${x.orderId}' is already cancelled or never existed in '${x.assetPair.key}' pair")
-          }(forwardReq(x))
       }
 
     case Shutdown =>
@@ -264,18 +247,21 @@ class MatcherActor(orderHistory: ActorRef,
     if (tradedPairs.contains(pair)) {
       tradedPairs -= pair
       deleteMessages(lastSequenceNr)
-      persistAll(tradedPairs.map(v => OrderBookCreated(v._1)).to[immutable.Seq])(_ => ())
+      saveSnapshot(Snapshot(tradedPairs.keySet))
     }
   }
 
   override def receiveRecover: Receive = {
     case OrderBookCreated(pair) =>
-      if (orderBook(pair).isEmpty) createOrderBook(pair)
+      if (orderBook(pair).isEmpty) {
+        log.info(s"Order book created for $pair")
+        createOrderBook(pair)
+      }
 
     case SnapshotOffer(metadata, snapshot: Snapshot) =>
       lastSnapshotSequenceNr = metadata.sequenceNr
       log.info(s"Loaded the snapshot with nr = ${metadata.sequenceNr}")
-      snapshot.tradedPairsSet.par.foreach(createOrderBook)
+      snapshot.tradedPairsSet.foreach(createOrderBook)
 
     case RecoveryCompleted =>
       log.info("Recovery completed!")
@@ -332,7 +318,7 @@ class MatcherActor(orderHistory: ActorRef,
       shutdownStatus = shutdownStatus.copy(orderBooksStopped = true)
       shutdownStatus.tryComplete()
 
-    case _ if shutdownStatus.initiated => sender() ! BadMatcherResponse(StatusCodes.ServiceUnavailable, "System is going shutdown")
+    case _ if shutdownStatus.initiated => sender() ! MatcherResponse(StatusCodes.ServiceUnavailable, "System is going shutdown")
   }
 
   override def receiveCommand: Receive = forwardToOrderBook orElse snapshotsCommands
@@ -392,27 +378,24 @@ object MatcherActor {
 
   case object ShutdownComplete
 
-  case class GetMarketsResponse(publicKey: Array[Byte], markets: Seq[MarketData]) extends MatcherResponse {
-    def getMarketsJs: JsValue =
-      JsArray(
-        markets.map(m =>
-          Json.obj(
-            "amountAsset"     -> m.pair.amountAssetStr,
-            "amountAssetName" -> m.amountAssetName,
-            "amountAssetInfo" -> m.amountAssetInfo,
-            "priceAsset"      -> m.pair.priceAssetStr,
-            "priceAssetName"  -> m.priceAssetName,
-            "priceAssetInfo"  -> m.priceAssetinfo,
-            "created"         -> m.created
-        )))
-
-    def json: JsValue = Json.obj(
-      "matcherPublicKey" -> Base58.encode(publicKey),
-      "markets"          -> getMarketsJs
-    )
-
-    def code: StatusCode = StatusCodes.OK
-  }
+  case class GetMarketsResponse(publicKey: Array[Byte], markets: Seq[MarketData])
+      extends MatcherResponse(
+        StatusCodes.OK,
+        Json.obj(
+          "matcherPublicKey" -> Base58.encode(publicKey),
+          "markets" -> JsArray(
+            markets.map(m =>
+              Json.obj(
+                "amountAsset"     -> m.pair.amountAssetStr,
+                "amountAssetName" -> m.amountAssetName,
+                "amountAssetInfo" -> m.amountAssetInfo,
+                "priceAsset"      -> m.pair.priceAssetStr,
+                "priceAssetName"  -> m.priceAssetName,
+                "priceAssetInfo"  -> m.priceAssetinfo,
+                "created"         -> m.created
+            )))
+        )
+      )
 
   case class AssetInfo(decimals: Int)
   implicit val assetInfoFormat: Format[AssetInfo] = Json.format[AssetInfo]

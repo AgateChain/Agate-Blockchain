@@ -21,7 +21,7 @@ object ExchangeTransactionDiff {
                        tx.sellOrder.assetPair.amountAsset,
                        tx.sellOrder.assetPair.priceAsset).flatten
     val assets             = assetIds.map(blockchain.assetDescription)
-    val smartTradesEnabled = blockchain.activatedFeatures.contains(BlockchainFeatures.SmartAccountsTrades.id)
+    val smartTradesEnabled = blockchain.activatedFeatures.contains(BlockchainFeatures.SmartAccountTrading.id)
     for {
       _ <- Either.cond(assets.forall(_.isDefined), (), GenericError("Assets should be issued before they can be traded"))
       _ <- Either.cond(
@@ -84,16 +84,16 @@ object ExchangeTransactionDiff {
         tx,
         portfolios = portfolios,
         orderFills = Map(
-          ByteStr(tx.buyOrder.id())  -> VolumeAndFee(tx.amount, tx.buyMatcherFee),
-          ByteStr(tx.sellOrder.id()) -> VolumeAndFee(tx.amount, tx.sellMatcherFee)
+          tx.buyOrder.id()  -> VolumeAndFee(tx.amount, tx.buyMatcherFee),
+          tx.sellOrder.id() -> VolumeAndFee(tx.amount, tx.sellMatcherFee)
         )
       )
     }
   }
 
   private def enoughVolume(exTrans: ExchangeTransaction, blockchain: Blockchain): Either[ValidationError, ExchangeTransaction] = {
-    val filledBuy  = blockchain.filledVolumeAndFee(ByteStr(exTrans.buyOrder.id()))
-    val filledSell = blockchain.filledVolumeAndFee(ByteStr(exTrans.sellOrder.id()))
+    val filledBuy  = blockchain.filledVolumeAndFee(exTrans.buyOrder.id())
+    val filledSell = blockchain.filledVolumeAndFee(exTrans.sellOrder.id())
 
     val buyTotal             = filledBuy.volume + exTrans.amount
     val sellTotal            = filledSell.volume + exTrans.amount
