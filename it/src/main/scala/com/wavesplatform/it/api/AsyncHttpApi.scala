@@ -224,7 +224,7 @@ object AsyncHttpApi extends Assertions {
       get(s"/tokens/balance/$address").as[FullAssetsInfo]
 
     def assetsDetails(assetId: String): Future[AssetInfo] =
-      get(s"/assets/details/$assetId").as[AssetInfo]
+      get(s"/tokens/details/$assetId").as[AssetInfo]
 
     def sponsorAsset(sourceAddress: String, assetId: String, minSponsoredAssetFee: Long, fee: Long): Future[Transaction] =
       postJson("/tokens/sponsor", SponsorFeeRequest(1, sourceAddress, assetId, Some(minSponsoredAssetFee), fee)).as[Transaction]
@@ -272,13 +272,8 @@ object AsyncHttpApi extends Assertions {
     def signedIssue(issue: SignedIssueV1Request): Future[Transaction] =
       postJson("/tokens/broadcast/issue", issue).as[Transaction]
 
-<<<<<<< HEAD
-    def batchSignedTransfer(transfers: Seq[SignedTransferV1Request], timeout: FiniteDuration = 1.minute): Future[Seq[Transaction]] = {
-      val request = _post(s"${n.nodeApiEndpoint}/tokens/broadcast/batch-transfer")
-=======
     def batchSignedTransfer(transfers: Seq[SignedTransferV2Request], timeout: FiniteDuration = 1.minute): Future[Seq[Transaction]] = {
-      val request = _post(s"${n.nodeApiEndpoint}/assets/broadcast/batch-transfer")
->>>>>>> 272596caeb0136d9fabc50602889b0e4694cdd76
+      val request = _post(s"${n.nodeApiEndpoint}/tokens/broadcast/batch-transfer")
         .setHeader("Content-type", "application/json")
         .withApiKey(n.apiKey)
         .setReadTimeout(timeout.toMillis.toInt)
