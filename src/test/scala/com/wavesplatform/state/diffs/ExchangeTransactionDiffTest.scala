@@ -66,39 +66,7 @@ class ExchangeTransactionDiffTest extends PropSpec with PropertyChecks with Matc
     }
   }
 
-<<<<<<< HEAD
-  property("can't trade from scripted account") {
-
-    val fs = TestFunctionalitySettings.Enabled.copy(preActivatedFeatures = Map(BlockchainFeatures.SmartAccounts.id -> 0))
-
-    val preconditionsAndExchange
-      : Gen[(GenesisTransaction, GenesisTransaction, SetScriptTransaction, IssueTransaction, IssueTransaction, ExchangeTransaction)] = for {
-      version <- Gen.oneOf(SetScriptTransaction.supportedVersions.toSeq)
-      buyer   <- accountGen
-      seller  <- accountGen
-      fee     <- smallFeeGen
-      ts      <- timestampGen
-      gen1: GenesisTransaction = GenesisTransaction.create(buyer, ENOUGH_AMT, ts).explicitGet()
-      gen2: GenesisTransaction = GenesisTransaction.create(seller, ENOUGH_AMT, ts).explicitGet()
-      setScript                = SetScriptTransaction.selfSigned(version, seller, Some(ScriptV1(TRUE).explicitGet()), fee, ts).explicitGet()
-      issue1: IssueTransaction <- issueReissueBurnGeneratorP(ENOUGH_AMT, seller).map(_._1).retryUntil(_.script.isEmpty)
-      issue2: IssueTransaction <- issueReissueBurnGeneratorP(ENOUGH_AMT, buyer).map(_._1).retryUntil(_.script.isEmpty)
-      maybeAsset1              <- Gen.option(issue1.id())
-      maybeAsset2              <- Gen.option(issue2.id()) suchThat (x => x != maybeAsset1)
-      exchange                 <- exchangeV1GeneratorP(buyer, seller, maybeAsset1, maybeAsset2).filter(_.version == 1)
-    } yield (gen1, gen2, setScript, issue1, issue2, exchange)
-
-    forAll(preconditionsAndExchange) {
-      case ((gen1, gen2, setScript, issue1, issue2, exchange)) =>
-        assertLeft(Seq(TestBlock.create(Seq(gen1, gen2, setScript, issue1, issue2))), TestBlock.create(Seq(exchange)), fs)(
-          "can't participate in ExchangeTransaction")
-    }
-  }
-
   property("buy Agate without enough money for fee") {
-=======
-  property("buy waves without enough money for fee") {
->>>>>>> 272596caeb0136d9fabc50602889b0e4694cdd76
     val preconditions: Gen[(GenesisTransaction, GenesisTransaction, IssueTransactionV1, ExchangeTransaction)] = for {
       buyer  <- accountGen
       seller <- accountGen
