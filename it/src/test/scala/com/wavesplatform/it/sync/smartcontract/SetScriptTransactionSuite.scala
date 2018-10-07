@@ -2,7 +2,7 @@ package com.wavesplatform.it.sync.smartcontract
 
 import com.wavesplatform.crypto
 import com.wavesplatform.it.api.SyncHttpApi._
-import com.wavesplatform.it.sync.{minFee, transferAmount}
+import com.wavesplatform.it.sync.{minFee, setScriptFee, transferAmount}
 import com.wavesplatform.it.transactions.BaseTransactionSuite
 import com.wavesplatform.it.util._
 import com.wavesplatform.lang.v1.compiler.CompilerV1
@@ -76,7 +76,7 @@ class SetScriptTransactionSuite extends BaseTransactionSuite with CancelAfterFai
 
     val script = ScriptV1(scriptText).explicitGet()
     val setScriptTransaction = SetScriptTransaction
-      .selfSigned(SetScriptTransaction.supportedVersions.head, acc0, Some(script), minFee, System.currentTimeMillis())
+      .selfSigned(SetScriptTransaction.supportedVersions.head, acc0, Some(script), setScriptFee, System.currentTimeMillis())
       .explicitGet()
 
     val setScriptId = sender
@@ -154,11 +154,15 @@ class SetScriptTransactionSuite extends BaseTransactionSuite with CancelAfterFai
         version = SetScriptTransaction.supportedVersions.head,
         sender = acc0,
         script = None,
+<<<<<<< HEAD
 <<<<<<< HEAD:it/src/test/scala/com/wavesplatform/it/sync/SetScriptTransactionSuite.scala
         fee = fee + 0.004.Agate,
 =======
         fee = minFee + 0.004.waves,
 >>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9:it/src/test/scala/com/wavesplatform/it/sync/smartcontract/SetScriptTransactionSuite.scala
+=======
+        fee = setScriptFee + 0.004.waves,
+>>>>>>> 6726da31c7c56583f9ba835454f5bb9087c4b82b
         timestamp = System.currentTimeMillis(),
         proofs = Proofs.empty
       )

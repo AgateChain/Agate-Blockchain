@@ -1,5 +1,6 @@
 package com.wavesplatform.matcher.market
 
+import com.google.common.base.Charsets
 import com.wavesplatform.WithDB
 import com.wavesplatform.matcher.model._
 import com.wavesplatform.matcher.{MatcherSettings, MatcherTestData}
@@ -10,7 +11,9 @@ import org.scalamock.scalatest.PathMockFactory
 import org.scalatest._
 import org.scalatest.prop.PropertyChecks
 import com.wavesplatform.account.{PrivateKeyAccount, PublicKeyAccount}
+import com.wavesplatform.matcher.model.Events.{OrderAdded, OrderCanceled}
 import com.wavesplatform.transaction.ValidationError
+import com.wavesplatform.transaction.ValidationError.GenericError
 import com.wavesplatform.transaction.assets.IssueTransactionV1
 import com.wavesplatform.transaction.assets.exchange.{AssetPair, Order}
 import com.wavesplatform.wallet.Wallet
@@ -58,8 +61,8 @@ class OrderValidatorSpecification
     }
   }
 
-  val wbtc         = ByteStr("WBTC".getBytes)
-  val pairWavesBtc = AssetPair(None, Some(wbtc))
+  val wbtc: ByteStr = mkAssetId("WBTC")
+  val pairWavesBtc  = AssetPair(None, Some(wbtc))
 
   "OrderValidator" should {
     "allows buy Agate for BTC without balance for order fee" in {
@@ -71,6 +74,7 @@ class OrderValidatorSpecification
                   ))) shouldBe an[Right[_, _]]
     }
 
+<<<<<<< HEAD
     "does not allow buy Agate for BTC when assets number is negative" in {
       validateNewOrderTest(
         Portfolio(0,
@@ -78,17 +82,67 @@ class OrderValidatorSpecification
                   Map(
                     wbtc -> -10 * Constants.UnitsInWave
                   ))) shouldBe a[Left[_, _]]
+=======
+    "does not allow to add the order" when {
+      "the assets number is negative" in {
+        validateNewOrderTest(
+          Portfolio(0,
+                    LeaseBalance.empty,
+                    Map(
+                      wbtc -> -10 * Constants.UnitsInWave
+                    ))) shouldBe a[Left[_, _]]
+      }
+
+      "it was added before" when {
+        "it accepted" in {
+          val o = newBuyOrder
+          setupEnoughPortfolio()
+
+          ov.orderHistory.process(OrderAdded(LimitOrder(o)))
+
+          ov.validateNewOrder(o) shouldBe Left(GenericError("Order was placed before"))
+        }
+
+        "it canceled" in {
+          val o = newBuyOrder
+          setupEnoughPortfolio()
+
+          ov.orderHistory.process(OrderAdded(LimitOrder(o)))
+          ov.orderHistory.process(OrderCanceled(LimitOrder(o), unmatchable = false))
+
+          ov.validateNewOrder(o) shouldBe Left(GenericError("Order was placed before"))
+        }
+      }
+>>>>>>> 6726da31c7c56583f9ba835454f5bb9087c4b82b
     }
   }
 
   private def validateNewOrderTest(expectedPortfolio: Portfolio): Either[ValidationError.GenericError, Order] = {
     (ov.utxPool.portfolio _).when(*).returns(expectedPortfolio)
-    val o = buy(
-      pair = pairWavesBtc,
-      price = 0.0022,
-      amount = 100 * Constants.UnitsInWave,
-      matcherFee = Some((0.003 * Constants.UnitsInWave).toLong)
-    )
+    val o = newBuyOrder
     ov.validateNewOrder(o)
+  }
+
+  private def newBuyOrder: Order = buy(
+    pair = pairWavesBtc,
+    price = 0.0022,
+    amount = 100 * Constants.UnitsInWave,
+    matcherFee = Some((0.003 * Constants.UnitsInWave).toLong)
+  )
+
+  private def setupEnoughPortfolio(): Unit = {
+    (ov.utxPool.portfolio _)
+      .when(*)
+      .returns(
+        Portfolio(0,
+                  LeaseBalance.empty,
+                  Map(
+                    wbtc -> 10 * Constants.UnitsInWave
+                  )))
+  }
+
+  private def mkAssetId(prefix: String): ByteStr = {
+    val prefixBytes = prefix.getBytes(Charsets.UTF_8)
+    ByteStr((prefixBytes ++ Array.fill[Byte](32 - prefixBytes.length)(0.toByte)).take(32))
   }
 }

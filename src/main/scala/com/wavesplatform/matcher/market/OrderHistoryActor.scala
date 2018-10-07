@@ -4,7 +4,7 @@ import akka.actor.{Actor, Props}
 import akka.http.scaladsl.model.StatusCodes
 import com.wavesplatform.account.Address
 import com.wavesplatform.matcher.MatcherSettings
-import com.wavesplatform.matcher.api.{MatcherResponse, NotImplemented, OrderDeleted}
+import com.wavesplatform.matcher.api.MatcherResponse
 import com.wavesplatform.matcher.market.OrderHistoryActor.{ExpirableOrderHistoryRequest, _}
 import com.wavesplatform.matcher.model.Events.{OrderAdded, OrderCanceled, OrderExecuted}
 import com.wavesplatform.matcher.model._
@@ -42,6 +42,7 @@ class OrderHistoryActor(db: DB, val settings: MatcherSettings, val utxPool: UtxP
       sender() ! getPairTradableBalance(assetPair, addr)
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     case GetActiveOrdersByAddress(requestId, addr, assets, _) =>
       // Because all orders spend Agate for fee
       val wasAssetChanged: Option[AssetId] => Boolean = if (assets.contains(None)) { _ =>
@@ -75,6 +76,8 @@ class OrderHistoryActor(db: DB, val settings: MatcherSettings, val utxPool: UtxP
 
       sender() ! result.fold[MatcherResponse](identity, id => OrderDeleted(id))
 >>>>>>> 272596caeb0136d9fabc50602889b0e4694cdd76
+=======
+>>>>>>> 6726da31c7c56583f9ba835454f5bb9087c4b82b
   }
 
   override def receive: Receive = {
@@ -131,8 +134,6 @@ object OrderHistoryActor {
   sealed trait ExpirableOrderHistoryRequest {
     def ts: Long
   }
-
-  case class DeleteOrderFromHistory(assetPair: AssetPair, address: Address, id: Option[ByteStr], ts: Long) extends ExpirableOrderHistoryRequest
 
   case class ValidateOrder(order: Order, ts: Long) extends ExpirableOrderHistoryRequest
 
