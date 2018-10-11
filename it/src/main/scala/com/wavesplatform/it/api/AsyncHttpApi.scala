@@ -186,19 +186,14 @@ object AsyncHttpApi extends Assertions {
                  amount: Long,
                  fee: Long,
                  assetId: Option[String] = None,
-<<<<<<< HEAD
-                 feeAssetId: Option[String] = None): Future[Transaction] =
-      postJson("/tokens/transfer", TransferV1Request(assetId, feeAssetId, amount, fee, sourceAddress, None, recipient)).as[Transaction]
-=======
                  feeAssetId: Option[String] = None,
                  version: Byte = 2): Future[Transaction] = {
       version match {
         case 2 =>
-          postJson("/assets/transfer", TransferV2Request(version, assetId, amount, feeAssetId, fee, sourceAddress, None, recipient)).as[Transaction]
-        case _ => postJson("/assets/transfer", TransferV1Request(assetId, feeAssetId, amount, fee, sourceAddress, None, recipient)).as[Transaction]
+          postJson("/tokens/transfer", TransferV2Request(version, assetId, amount, feeAssetId, fee, sourceAddress, None, recipient)).as[Transaction]
+        case _ => postJson("/tokens/transfer", TransferV1Request(assetId, feeAssetId, amount, fee, sourceAddress, None, recipient)).as[Transaction]
       }
     }
->>>>>>> 7d069f177334574b229406aaec8a7f1a3f7ffb2b
 
     def payment(sourceAddress: String, recipient: String, amount: Long, fee: Long): Future[Transaction] =
       postJson("/Agate/payment", PaymentRequest(amount, fee, sourceAddress, recipient)).as[Transaction]
@@ -244,10 +239,6 @@ object AsyncHttpApi extends Assertions {
               quantity: Long,
               decimals: Byte,
               reissuable: Boolean,
-<<<<<<< HEAD
-              fee: Long): Future[Transaction] =
-      postJson("/tokens/issue", IssueV1Request(sourceAddress, name, description, quantity, decimals, reissuable, fee)).as[Transaction]
-=======
               fee: Long,
               version: Byte = 2): Future[Transaction] = {
       version match {
@@ -268,7 +259,6 @@ object AsyncHttpApi extends Assertions {
         case _ => postJson("/assets/issue", IssueV1Request(sourceAddress, name, description, quantity, decimals, reissuable, fee)).as[Transaction]
       }
     }
->>>>>>> 7d069f177334574b229406aaec8a7f1a3f7ffb2b
 
     def scriptCompile(code: String) = post("/utils/script/compile", code).as[CompiledScript]
 
