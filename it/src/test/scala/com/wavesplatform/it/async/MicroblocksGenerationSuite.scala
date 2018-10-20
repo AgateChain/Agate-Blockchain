@@ -13,34 +13,8 @@ import scala.concurrent.duration._
 class MicroblocksGenerationSuite extends FreeSpec with Matchers with TransferSending with NodesFromDocker {
   import MicroblocksGenerationSuite._
 
-<<<<<<< HEAD
-  private val txsInMicroBlock = 200
-  private val maxTxs          = 2000
-
-  override protected val nodeConfigs: Seq[Config] = NodeConfigs.newBuilder
-    .overrideBase(
-      _.raw(
-        s"""Agate {
-         |  network.enable-peers-exchange = no
-         |
-         |  miner {
-         |    quorum = 0
-         |    minimal-block-generation-offset = 1m
-         |    micro-block-interval = 3s
-         |    max-transactions-in-key-block = 0
-         |    max-transactions-in-micro-block = $txsInMicroBlock
-         |  }
-         |
-         |  blockchain.custom.functionality.pre-activated-features.2 = 0
-         |  features.supported = [2]
-         |}""".stripMargin
-      ))
-    .withDefault(1)
-    .build()
-=======
   override protected val nodeConfigs: Seq[Config] =
     Seq(ConfigOverrides.withFallback(NodeConfigs.randomMiner))
->>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
 
   private val nodeAddresses = nodeConfigs.map(_.getString("address")).toSet
 
