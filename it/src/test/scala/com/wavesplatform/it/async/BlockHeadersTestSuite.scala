@@ -97,13 +97,8 @@ class BlockHeadersTestSuite
   "blockSeq content should be equal to blockHeaderSeq, except transactions info" in {
     val f = for {
       baseHeight   <- traverse(nodes)(_.height).map(_.max)
-<<<<<<< HEAD
       _            <- txRequestsGen(30, 2.Agate)
-      _            <- nodes.waitForSameBlocksAt(baseHeight + 3)
-=======
-      _            <- txRequestsGen(30, 2.waves)
       _            <- nodes.waitForSameBlockHeadesAt(baseHeight + 3)
->>>>>>> 4f3106f04982d02459cdc4705ed835b976d02dd9
       blocks       <- nodes.head.blockSeq(baseHeight + 1, baseHeight + 3)
       blockHeaders <- nodes.head.blockHeadersSeq(baseHeight + 1, baseHeight + 3)
     } yield {
