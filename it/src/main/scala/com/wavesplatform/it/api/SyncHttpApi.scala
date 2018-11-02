@@ -1,5 +1,8 @@
 package com.wavesplatform.it.api
 
+import java.net.InetSocketAddress
+import java.util.concurrent.TimeoutException
+
 import akka.http.scaladsl.model.StatusCodes.{BadRequest, NotFound}
 import com.wavesplatform.api.http.AddressApiRoute
 import com.wavesplatform.api.http.assets.{SignedIssueV1Request, SignedIssueV2Request}
@@ -18,7 +21,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Awaitable, Future}
 import scala.util.control.NonFatal
-import scala.util.{Failure, Try}
+import scala.util._
 
 object SyncHttpApi extends Assertions {
   case class ErrorMessage(error: Int, message: String)
@@ -44,11 +47,11 @@ object SyncHttpApi extends Assertions {
     case _          => Assertions.fail("Expecting bad request")
   }
 
-  def assertBadRequestAndMessage[R](f: => R, errorMessage: String, statusCode: Int = BadRequest.intValue): Assertion = Try(f) match {
-    case Failure(UnexpectedStatusCodeException(_, statusCode, responseBody)) =>
-      Assertions.assert(statusCode == statusCode && parse(responseBody).as[ErrorMessage].message.contains(errorMessage))
+  def assertBadRequestAndMessage[R](f: => R, errorMessage: String, expectedStatusCode: Int = BadRequest.intValue): Assertion = Try(f) match {
+    case Failure(e @ UnexpectedStatusCodeException(_, statusCode, responseBody)) =>
+      Assertions.assert(statusCode == expectedStatusCode && parse(responseBody).as[ErrorMessage].message.contains(errorMessage))
     case Failure(e) => Assertions.fail(e)
-    case _          => Assertions.fail(s"Expecting bad request")
+    case Success(s) => Assertions.fail(s"Expecting bad request but handle $s")
   }
 
   def assertNotFoundAndMessage[R](f: => R, errorMessage: String): Assertion = Try(f) match {
@@ -58,14 +61,14 @@ object SyncHttpApi extends Assertions {
     case _          => Assertions.fail(s"Expecting not found error")
   }
 
-  val RequestAwaitTime = 15.seconds
+  val RequestAwaitTime = 30.seconds
 
   def sync[A](awaitable: Awaitable[A], atMost: Duration = RequestAwaitTime) =
     try Await.result(awaitable, atMost)
     catch {
       case usce: UnexpectedStatusCodeException => throw usce
-      case NonFatal(cause) =>
-        throw new Exception(cause)
+      case te: TimeoutException                => throw te
+      case NonFatal(cause)                     => throw new Exception(cause)
     }
 
   implicit class NodeExtSync(n: Node) extends Assertions with Matchers {
@@ -124,8 +127,9 @@ object SyncHttpApi extends Assertions {
               decimals: Byte,
               reissuable: Boolean,
               fee: Long,
-              version: Byte = 2): Transaction =
-      sync(async(n).issue(sourceAddress, name, description, quantity, decimals, reissuable, fee, version))
+              version: Byte = 1,
+              script: Option[String] = None): Transaction =
+      sync(async(n).issue(sourceAddress, name, description, quantity, decimals, reissuable, fee, version, script))
 
     def reissue(sourceAddress: String, assetId: String, quantity: Long, reissuable: Boolean, fee: Long): Transaction =
       sync(async(n).reissue(sourceAddress, assetId, quantity, reissuable, fee))
@@ -253,6 +257,24 @@ object SyncHttpApi extends Assertions {
 
     def calculateFee(tx: JsObject): FeeInfo =
       sync(async(n).calculateFee(tx))
+
+    def blacklistedPeers: Seq[BlacklistedPeer] =
+      sync(async(n).blacklistedPeers)
+
+    def waitForBlackList(blackList: Int): Seq[BlacklistedPeer] =
+      sync(async(n).waitForBlackList(blackList))
+
+    def status(): Status =
+      sync(async(n).status)
+
+    def waitForPeers(targetPeersCount: Int, requestAwaitTime: FiniteDuration = RequestAwaitTime): Seq[Peer] =
+      sync(async(n).waitForPeers(targetPeersCount), requestAwaitTime)
+
+    def connect(address: InetSocketAddress): Unit =
+      sync(async(n).connect(address))
+
+    def setAssetScript(assetId: String, sender: String, fee: Long, script: Option[String] = None): Transaction =
+      sync(async(n).setAssetScript(assetId, sender, fee, script))
   }
 
   implicit class NodesExtSync(nodes: Seq[Node]) {

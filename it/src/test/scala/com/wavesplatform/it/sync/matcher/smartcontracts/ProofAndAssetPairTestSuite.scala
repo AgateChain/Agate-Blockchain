@@ -17,28 +17,21 @@ import scala.concurrent.duration._
 class ProofAndAssetPairTestSuite extends MatcherSuiteBase {
   override protected def nodeConfigs: Seq[Config] = Configs
 
-  matcherNode.signedIssue(createSignedIssueRequest(IssueUsdTx))
-  nodes.waitForHeightArise()
-
-  aliceNode.transfer(aliceNode.address, aliceAcc.address, defaultAssetQuantity, 100000, Some(UsdId.toString), None, 2)
-  nodes.waitForHeightArise()
-
-  val predefAssetPair    = wavesUsdPair
-  val unallowedAssetPair = wctWavesPair
-
-  val aliceAsset =
+  private val aliceAsset =
     aliceNode.issue(aliceAcc.address, "AliceCoin", "AliceCoin for matcher's tests", someAssetAmount, 0, reissuable = false, issueFee, 2).id
-  nodes.waitForHeightAriseAndTxPresent(aliceAsset)
-  val aliceWavesPair = AssetPair(ByteStr.decodeBase58(aliceAsset).toOption, None)
+
+  {
+    val issueTx = matcherNode.signedIssue(createSignedIssueRequest(IssueUsdTx))
+    matcherNode.waitForTransaction(issueTx.id)
+
+    val transferTx = aliceNode.transfer(aliceNode.address, aliceAcc.address, defaultAssetQuantity, 100000, Some(UsdId.toString), None, 2)
+    matcherNode.waitForTransaction(transferTx.id)
+  }
+
+  private val predefAssetPair = wavesUsdPair
+  private val aliceWavesPair  = AssetPair(ByteStr.decodeBase58(aliceAsset).toOption, None)
 
   "Proofs and AssetPairs verification with SmartContracts" - {
-    val sc1 = s"""true"""
-    val sc2 =
-      s"""
-         |match tx {
-         | case s : SetScriptTransaction => true
-         | case _ => false
-         |}""".stripMargin
     val sc3 = s"""
                  |match tx {
                  | case t : Order =>
@@ -133,7 +126,7 @@ class ProofAndAssetPairTestSuite extends MatcherSuiteBase {
       "set contracts with AssetPairs/all tx fields/true/one proof and then place order" in {
         for (i <- Seq(sc1, sc3, sc4, sc5)) {
           log.debug(s"contract: $i")
-          setContract(i, aliceAcc)
+          setContract(Some(i), aliceAcc)
 
           val aliceOrd1 = matcherNode
             .placeOrder(aliceAcc, predefAssetPair, OrderType.BUY, 500, 2.waves * Order.PriceConstant, version = 1, 10.minutes)
@@ -147,18 +140,19 @@ class ProofAndAssetPairTestSuite extends MatcherSuiteBase {
             .id
           matcherNode.waitOrderStatus(aliceWavesPair, aliceOrd2, "Accepted", 1.minute)
 
-          nodes.waitForHeightArise()
+          matcherNode.cancelOrder(aliceAcc, predefAssetPair, aliceOrd1)
+          matcherNode.waitOrderStatus(predefAssetPair, aliceOrd1, "Cancelled")
 
-          matcherNode.cancelOrder(aliceAcc, predefAssetPair, Some(aliceOrd1)).status should be("OrderCanceled")
-          matcherNode.cancelOrder(aliceAcc, aliceWavesPair, Some(aliceOrd2)).status should be("OrderCanceled")
+          matcherNode.cancelOrder(aliceAcc, aliceWavesPair, aliceOrd2).status should be("OrderCanceled")
+          matcherNode.waitOrderStatus(aliceWavesPair, aliceOrd2, "Cancelled")
         }
 
-        setContract(null, aliceAcc)
+        setContract(None, aliceAcc)
       }
 
-      "set contracts with many proofs and then place order" ignore {
+      "set contracts with many proofs and then place order" in {
         for (i <- Seq(sc5, sc6)) {
-          setContract(i, aliceAcc)
+          setContract(Some(i), aliceAcc)
 
           val currTime = System.currentTimeMillis()
 
@@ -187,59 +181,65 @@ class ProofAndAssetPairTestSuite extends MatcherSuiteBase {
             .id
           matcherNode.waitOrderStatus(predefAssetPair, ord1, "Accepted", 1.minute)
 
-          nodes.waitForHeightArise()
-
-          matcherNode.cancelOrder(aliceAcc, predefAssetPair, Some(ord1)).status should be("OrderCanceled")
+          matcherNode.cancelOrder(aliceAcc, predefAssetPair, ord1)
+          matcherNode.waitOrderStatus(predefAssetPair, ord1, "Cancelled")
         }
 
-        setContract(null, aliceAcc)
+        setContract(None, aliceAcc)
       }
 
       "place order and then set contract on AssetPairs/true/all fields/one proof" in {
         for (i <- Seq(sc1, sc3, sc4, sc5)) {
           log.debug(s"contract: $i")
           val aliceOrd1 = matcherNode
-            .placeOrder(aliceAcc, predefAssetPair, OrderType.BUY, 500, 2.waves * Order.PriceConstant, version = 1, 10.minutes)
+            .placeOrder(aliceAcc, predefAssetPair, OrderType.BUY, 500, 2.waves * Order.PriceConstant, version = 2, 10.minutes)
             .message
             .id
           matcherNode.waitOrderStatus(predefAssetPair, aliceOrd1, "Accepted", 1.minute)
 
           val aliceOrd2 = matcherNode
-            .placeOrder(aliceAcc, aliceWavesPair, OrderType.SELL, 500, 2.waves * Order.PriceConstant, version = 1, 10.minutes)
+            .placeOrder(aliceAcc, aliceWavesPair, OrderType.SELL, 500, 2.waves * Order.PriceConstant, version = 2, 10.minutes)
             .message
             .id
           matcherNode.waitOrderStatus(aliceWavesPair, aliceOrd2, "Accepted", 1.minute)
 
-          setContract(i, aliceAcc)
+          setContract(Some(i), aliceAcc)
 
           val bobOrd1 = matcherNode
             .placeOrder(bobAcc, predefAssetPair, OrderType.SELL, 500, 2.waves * Order.PriceConstant, version = 1, 10.minutes)
             .message
             .id
           val bobOrd2 = matcherNode
-            .placeOrder(bobAcc, aliceWavesPair, OrderType.BUY, 500, 2.waves * Order.PriceConstant, version = 1, 10.minutes)
+            .placeOrder(bobAcc, aliceWavesPair, OrderType.BUY, 500, 2.waves * Order.PriceConstant, version = 2, 10.minutes)
             .message
             .id
 
           matcherNode.waitOrderStatus(predefAssetPair, aliceOrd1, "Filled", 1.minute)
-          matcherNode.waitOrderStatus(aliceWavesPair, aliceOrd1, "Filled", 1.minute)
+          matcherNode.waitOrderStatus(aliceWavesPair, aliceOrd2, "Filled", 1.minute)
           matcherNode.waitOrderStatus(predefAssetPair, bobOrd1, "Filled", 1.minute)
           matcherNode.waitOrderStatus(aliceWavesPair, bobOrd2, "Filled", 1.minute)
 
           val exchangeTx1 = matcherNode.transactionsByOrder(bobOrd1).headOption.getOrElse(fail("Expected an exchange transaction"))
-          nodes.waitForHeightAriseAndTxPresent(exchangeTx1.id)
+          matcherNode.waitForTransaction(exchangeTx1.id)
 
           val exchangeTx2 = matcherNode.transactionsByOrder(bobOrd2).headOption.getOrElse(fail("Expected an exchange transaction"))
-          nodes.waitForHeightAriseAndTxPresent(exchangeTx2.id)
+          matcherNode.waitForTransaction(exchangeTx2.id)
 
           matcherNode.reservedBalance(bobAcc) shouldBe empty
-        }
 
-        setContract(null, aliceAcc)
+          setContract(None, aliceAcc)
+        }
       }
 
-      "place order and then set contract with many proofs" ignore {
-        for (i <- Seq(sc5, sc6)) {
+      "place order and then set contract with many proofs" in {
+        setContract(Some("true"), aliceAcc)
+
+        val transferTx = aliceNode.transfer(aliceAcc.address, bobAcc.address, 1000, 0.005.waves, Some(aliceAsset), None, 2)
+        nodes.waitForHeightAriseAndTxPresent(transferTx.id)
+
+        for ((i, step) <- Seq(sc5, sc6).zipWithIndex) {
+          markup(s"step $step started")
+
           for (assetP <- Seq(predefAssetPair, aliceWavesPair)) {
             val currTime = System.currentTimeMillis()
 
@@ -260,7 +260,7 @@ class ProofAndAssetPairTestSuite extends MatcherSuiteBase {
             val sigAlice = ByteStr(crypto.sign(aliceAcc, unsigned.bodyBytes()))
             val sigMat   = ByteStr(crypto.sign(matcherNode.privateKey, unsigned.bodyBytes()))
 
-            val signed = unsigned.copy(proofs = Proofs(Seq(sigAlice, sigMat)))
+            val signed = unsigned.copy(proofs = Proofs(Seq(sigAlice, ByteStr.empty, sigMat)))
 
             val ord = matcherNode
               .placeOrder(signed)
@@ -269,14 +269,14 @@ class ProofAndAssetPairTestSuite extends MatcherSuiteBase {
             matcherNode.waitOrderStatus(assetP, ord, "Accepted", 1.minute)
           }
 
-          setContract(i, aliceAcc)
+          setContract(Some(i), aliceAcc)
 
           val bobOrd1 = matcherNode
             .placeOrder(bobAcc, predefAssetPair, OrderType.SELL, 500, 2.waves * Order.PriceConstant, version = 1, 10.minutes)
             .message
             .id
           val bobOrd2 = matcherNode
-            .placeOrder(bobAcc, aliceWavesPair, OrderType.BUY, 500, 2.waves * Order.PriceConstant, version = 1, 10.minutes)
+            .placeOrder(bobAcc, aliceWavesPair, OrderType.SELL, 500, 2.waves * Order.PriceConstant, version = 1, 10.minutes)
             .message
             .id
 
@@ -284,42 +284,51 @@ class ProofAndAssetPairTestSuite extends MatcherSuiteBase {
           matcherNode.waitOrderStatus(aliceWavesPair, bobOrd2, "Filled", 1.minute)
 
           val exchangeTx1 = matcherNode.transactionsByOrder(bobOrd1).headOption.getOrElse(fail("Expected an exchange transaction"))
-          nodes.waitForHeightAriseAndTxPresent(exchangeTx1.id)
+          matcherNode.waitForTransaction(exchangeTx1.id)
 
           val exchangeTx2 = matcherNode.transactionsByOrder(bobOrd2).headOption.getOrElse(fail("Expected an exchange transaction"))
-          nodes.waitForHeightAriseAndTxPresent(exchangeTx2.id)
+          matcherNode.waitForTransaction(exchangeTx2.id)
 
           matcherNode.reservedBalance(bobAcc) shouldBe empty
         }
-        setContract(null, aliceAcc)
+
+        setContract(None, aliceAcc)
       }
     }
 
     "negative scenarios of order placement" - {
       "set contact and then place order" in {
-        for (i <- Seq(sc2, sc7, sc8, sc9)) {
+        for (i <- Seq(sc2, sc7, sc8)) {
           log.debug(s"contract: $i")
-          setContract(i, aliceAcc)
+          setContract(Some(i), aliceAcc)
 
-          assertBadRequest(
+          assertBadRequestAndResponse(
             matcherNode
-              .placeOrder(aliceAcc, predefAssetPair, OrderType.BUY, 500, 2.waves * Order.PriceConstant, version = 1, 10.minutes)
+              .placeOrder(aliceAcc, predefAssetPair, OrderType.BUY, 500, 2.waves * Order.PriceConstant, version = 2, 10.minutes),
+            "Order rejected by script for"
           )
 
-          assertBadRequest(
+          assertBadRequestAndResponse(
             matcherNode
-              .placeOrder(aliceAcc, aliceWavesPair, OrderType.SELL, 500, 2.waves * Order.PriceConstant, version = 1, 10.minutes)
+              .placeOrder(aliceAcc, aliceWavesPair, OrderType.SELL, 500, 2.waves * Order.PriceConstant, version = 2, 10.minutes),
+            "Order rejected by script for"
           )
         }
-        setContract(null, aliceAcc)
+
+        setContract(Some(sc9), aliceAcc)
+        assertBadRequestAndResponse(
+          matcherNode
+            .placeOrder(aliceAcc, predefAssetPair, OrderType.BUY, 500, 2.waves * Order.PriceConstant, version = 2, 10.minutes),
+          "Error executing script for"
+        )
+
+        setContract(None, aliceAcc)
       }
 
       "place order and then set contract" in {
-        for (i <- Seq(sc2, sc7, sc8 /*, sc9 */ )) {
+        for (i <- Seq(sc2, sc7, sc8, sc9)) {
           log.debug(s"contract: $i")
-//          val bobBalance     = bobNode.accountBalances(bobAcc.address)._1
-//          val matcherBalance = matcherNode.accountBalances(matcherNode.address)._1
-          val aliceBalance = aliceNode.accountBalances(aliceAcc.address)._1
+          val aliceBalance = matcherNode.accountBalances(aliceAcc.address)._1
 
           val aliceOrd1 = matcherNode
             .placeOrder(aliceAcc, predefAssetPair, OrderType.BUY, 100, 2.waves * Order.PriceConstant, version = 2, 10.minutes)
@@ -333,7 +342,7 @@ class ProofAndAssetPairTestSuite extends MatcherSuiteBase {
             .id
           matcherNode.waitOrderStatus(aliceWavesPair, aliceOrd2, "Accepted", 1.minute)
 
-          setContract(i, aliceAcc)
+          setContract(Some(i), aliceAcc)
 
           val bobOrd1 = matcherNode
             .placeOrder(bobAcc, predefAssetPair, OrderType.SELL, 100, 2.waves * Order.PriceConstant, version = 2, 10.minutes)
@@ -341,7 +350,7 @@ class ProofAndAssetPairTestSuite extends MatcherSuiteBase {
             .id
 
           val bobOrd2 = matcherNode
-            .placeOrder(bobAcc, aliceWavesPair, OrderType.BUY, 500, 2.waves * Order.PriceConstant, version = 2, 10.minutes)
+            .placeOrder(bobAcc, aliceWavesPair, OrderType.BUY, 500, 2.waves * Order.PriceConstant, version = 1, 10.minutes)
             .message
             .id
 
@@ -360,10 +369,13 @@ class ProofAndAssetPairTestSuite extends MatcherSuiteBase {
           val updatedAliceBalance = aliceNode.accountBalances(aliceAcc.address)._1
           updatedAliceBalance shouldBe (aliceBalance - 0.014.waves)
 
-          matcherNode.cancelOrder(bobAcc, predefAssetPair, Some(bobOrd1)).status should be("OrderCanceled")
-          matcherNode.cancelOrder(bobAcc, aliceWavesPair, Some(bobOrd2)).status should be("OrderCanceled")
+          matcherNode.cancelOrder(bobAcc, predefAssetPair, bobOrd1)
+          matcherNode.waitOrderStatus(predefAssetPair, bobOrd1, "Cancelled")
 
-          setContract(null, aliceAcc)
+          matcherNode.cancelOrder(bobAcc, aliceWavesPair, bobOrd2)
+          matcherNode.waitOrderStatus(aliceWavesPair, bobOrd2, "Cancelled")
+
+          setContract(None, aliceAcc)
         }
 
       }
