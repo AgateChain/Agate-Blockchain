@@ -1,11 +1,11 @@
 package com.wavesplatform.state.diffs
 
 import cats._
+import com.wavesplatform.account.Address
 import com.wavesplatform.features.FeatureProvider._
 import com.wavesplatform.features.{BlockchainFeature, BlockchainFeatures}
 import com.wavesplatform.settings.FunctionalitySettings
 import com.wavesplatform.state._
-import com.wavesplatform.account.Address
 import com.wavesplatform.transaction.ValidationError._
 import com.wavesplatform.transaction._
 import com.wavesplatform.transaction.assets._
@@ -22,6 +22,7 @@ object CommonValidation {
   val MaxTimeTransactionOverBlockDiff: FiniteDuration     = 90.minutes
   val MaxTimePrevBlockOverTransactionDiff: FiniteDuration = 2.hours
   val ScriptExtraFee                                      = 400000L
+  val FeeUnit                                             = 100000
 
   val FeeConstants: Map[Byte, Long] = Map(
     GenesisTransaction.typeId        -> 0,
@@ -38,7 +39,7 @@ object CommonValidation {
     DataTransaction.typeId           -> 1,
     SetScriptTransaction.typeId      -> 10,
     SponsorFeeTransaction.typeId     -> 1000,
-    SetAssetScriptTransaction.typeId -> 1000
+    SetAssetScriptTransaction.typeId -> (1000 - 4)
   )
 
   def disallowSendingGreaterThanBalance[T <: Transaction](blockchain: Blockchain,
@@ -136,7 +137,7 @@ object CommonValidation {
       case it: IssueTransactionV2   => activationBarrier(if (it.script.isEmpty) BlockchainFeatures.SmartAccounts else BlockchainFeatures.SmartAssets)
       case it: SetAssetScriptTransaction =>
         if (it.script.isEmpty) {
-          Left(GenericError("Empty script is disabled."))
+          Left(GenericError("Cannot remove script from an asset issued with a script"))
         } else {
           activationBarrier(BlockchainFeatures.SmartAssets)
         }
@@ -189,18 +190,18 @@ object CommonValidation {
     def feeAfterSponsorship(txAsset: Option[AssetId]): Either[ValidationError, FeeInfo] =
       if (height < Sponsorship.sponsoredFeesSwitchHeight(blockchain, fs)) {
         // This could be true for private blockchains
-        feeInUnits(blockchain, height, tx).map(x => (None, x * Sponsorship.FeeUnit))
+        feeInUnits(blockchain, height, tx).map(x => (None, x * FeeUnit))
       } else
         for {
           feeInUnits <- feeInUnits(blockchain, height, tx)
           r <- txAsset match {
-            case None => Right((None, feeInUnits * Sponsorship.FeeUnit))
+            case None => Right((None, feeInUnits * FeeUnit))
             case Some(assetId) =>
               for {
                 assetInfo <- blockchain.assetDescription(assetId).toRight(GenericError(s"Asset $assetId does not exist, cannot be used to pay fees"))
                 wavesFee <- Either.cond(
                   assetInfo.sponsorship > 0,
-                  feeInUnits * Sponsorship.FeeUnit,
+                  feeInUnits * FeeUnit,
                   GenericError(s"Asset $assetId is not sponsored, cannot be used to pay fees")
                 )
               } yield (Some((assetId, assetInfo)), wavesFee)
@@ -223,16 +224,19 @@ object CommonValidation {
       }
     }
 
-    def hasSmartAccountScript: Boolean = tx match {
-      case tx: Transaction with Authorized => blockchain.hasScript(tx.sender)
-      case _                               => false
+    def smartAccountScriptsCount: Int = tx match {
+      case etx: ExchangeTransaction =>
+        cond(blockchain.hasScript(etx.sender))(1, 0) +
+          cond(blockchain.hasScript(etx.sellOrder.sender))(1, 0) +
+          cond(blockchain.hasScript(etx.buyOrder.sender))(1, 0)
+      case tx: Transaction with Authorized => cond(blockchain.hasScript(tx.sender))(1, 0)
+      case _                               => 0
     }
 
     def feeAfterSmartAccounts(inputFee: FeeInfo): Either[ValidationError, FeeInfo] = Right {
-      if (hasSmartAccountScript) {
-        val (feeAssetInfo, feeAmount) = inputFee
-        (feeAssetInfo, feeAmount + ScriptExtraFee)
-      } else inputFee
+      val extraFee                  = smartAccountScriptsCount * ScriptExtraFee
+      val (feeAssetInfo, feeAmount) = inputFee
+      (feeAssetInfo, feeAmount + extraFee)
     }
 
     feeAfterSponsorship(tx.assetFee._1)
@@ -246,6 +250,7 @@ object CommonValidation {
   }
 
   def checkFee(blockchain: Blockchain, fs: FunctionalitySettings, height: Int, tx: Transaction): Either[ValidationError, Unit] = {
+<<<<<<< HEAD
 <<<<<<< HEAD
     def restFeeAfterSponsorship(inputFee: (Option[AssetId], Long)): Either[ValidationError, (Option[AssetId], Long)] =
       if (height < Sponsorship.sponsoredFeesSwitchHeight(blockchain, fs)) Right(inputFee)
@@ -322,6 +327,9 @@ object CommonValidation {
     if (tx.assetFee._1.nonEmpty && !blockchain.isFeatureActivated(BlockchainFeatures.SmartAssets, height) && hasSmartAccountScript) {
       Left(GenericError("Transactions from scripted accounts require Waves as fee"))
     } else if (height >= Sponsorship.sponsoredFeesSwitchHeight(blockchain, fs)) {
+=======
+    if (height >= Sponsorship.sponsoredFeesSwitchHeight(blockchain, fs)) {
+>>>>>>> 3ed6509985baf3fbb9364f1e34f19a473ab95339
       for {
         minAFee <- getMinFee(blockchain, fs, height, tx)
         minWaves   = minAFee._3
@@ -339,4 +347,6 @@ object CommonValidation {
     }
 >>>>>>> 1a6b3243dad151498c2106ff6f09c27303a5800f
   }
+
+  def cond[A](c: Boolean)(a: A, b: A): A = if (c) a else b
 }

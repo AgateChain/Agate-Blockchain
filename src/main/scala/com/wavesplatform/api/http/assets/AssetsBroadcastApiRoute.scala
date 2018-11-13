@@ -1,29 +1,31 @@
 package com.wavesplatform.api.http.assets
 
 import akka.http.scaladsl.server.Route
+import com.wavesplatform.api.http._
+import com.wavesplatform.http.BroadcastRoute
 import com.wavesplatform.network._
 import com.wavesplatform.settings.RestAPISettings
 import com.wavesplatform.state.diffs.TransactionDiffer.TransactionValidationError
+import com.wavesplatform.transaction.{Transaction, ValidationError}
 import com.wavesplatform.utx.UtxPool
 import io.netty.channel.group.ChannelGroup
-import io.swagger.annotations._
-import javax.ws.rs.Path
-import com.wavesplatform.api.http._
-import com.wavesplatform.http.BroadcastRoute
-import com.wavesplatform.transaction.{Transaction, ValidationError}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Left, Right}
 
+<<<<<<< HEAD
 @Path("/tokens/broadcast")
 @Api(value = "tokens")
+=======
+>>>>>>> 3ed6509985baf3fbb9364f1e34f19a473ab95339
 case class AssetsBroadcastApiRoute(settings: RestAPISettings, utx: UtxPool, allChannels: ChannelGroup) extends ApiRoute with BroadcastRoute {
 
   override val route: Route = pathPrefix("tokens" / "broadcast") {
     issue ~ reissue ~ transfer ~ burnRoute ~ batchTransfer ~ exchange
   }
 
+<<<<<<< HEAD
   @Path("/issue")
   @ApiOperation(
     value = "Broadcast signed token issue",
@@ -46,12 +48,15 @@ case class AssetsBroadcastApiRoute(settings: RestAPISettings, utx: UtxPool, allC
       new ApiResponse(code = 200, message = "Json with signed token issue transaction contained token ID"),
       new ApiResponse(code = 400, message = "Json with error description", response = classOf[ApiErrorResponse])
     ))
+=======
+>>>>>>> 3ed6509985baf3fbb9364f1e34f19a473ab95339
   def issue: Route = (path("issue") & post) {
     json[SignedIssueV1Request] { issueReq =>
       doBroadcast(issueReq.toTx)
     }
   }
 
+<<<<<<< HEAD
   @Path("/reissue")
   @ApiOperation(
     value = "Broadcast signed token reissue",
@@ -74,12 +79,15 @@ case class AssetsBroadcastApiRoute(settings: RestAPISettings, utx: UtxPool, allC
       new ApiResponse(code = 200, message = "Json with signed token reissue transaction"),
       new ApiResponse(code = 400, message = "Json with error description", response = classOf[ApiErrorResponse])
     ))
+=======
+>>>>>>> 3ed6509985baf3fbb9364f1e34f19a473ab95339
   def reissue: Route = (path("reissue") & post) {
     json[SignedReissueV1Request] { reissueReq =>
       doBroadcast(reissueReq.toTx)
     }
   }
 
+<<<<<<< HEAD
   @Path("/burn")
   @ApiOperation(
     value = "Broadcast signed token burn transaction",
@@ -100,12 +108,15 @@ case class AssetsBroadcastApiRoute(settings: RestAPISettings, utx: UtxPool, allC
       new ApiResponse(code = 200, message = "Json with signed token burn transaction"),
       new ApiResponse(code = 400, message = "Json with error description", response = classOf[ApiErrorResponse])
     ))
+=======
+>>>>>>> 3ed6509985baf3fbb9364f1e34f19a473ab95339
   def burnRoute: Route = (path("burn") & post) {
     json[SignedBurnV1Request] { burnReq =>
       doBroadcast(burnReq.toTx)
     }
   }
 
+<<<<<<< HEAD
   @Path("/batch-transfer")
   @ApiOperation(value = "Batch transfer operation",
                 notes = "Transfer tokens to new addresses",
@@ -125,6 +136,8 @@ case class AssetsBroadcastApiRoute(settings: RestAPISettings, utx: UtxPool, allC
           "[{\n  \"assetId\": \"E9yZC4cVhCDfbjFJCc9CqkAtkoFy5KaCe64iaxHM2adG\",\n  \"senderPublicKey\": \"CRxqEuxhdZBEHX42MU4FfyJxuHmbDBTaHMhM3Uki7pLw\",\n  \"recipient\": \"3Mx2afTZ2KbRrLNbytyzTtXukZvqEB8SkW7\",\n  \"fee\": 100000,\n  \"amount\": 5500000000,\n  \"attachment\": \"BJa6cfyGUmzBFTj3vvvaew\",\n  \"timestamp\": 1479222433704, \n  \"signature\": \"2TyN8pNS7mS9gfCbX2ktpkWVYckoAmRmDZzKH3K35DKs6sUoXHArzukV5hvveK9t79uzT3cA8CYZ9z3Utj6CnCEo\"\n, {\n  \"assetId\": \"E9yZC4cVhCDfbjFJCc9CqkAtkoFy5KaCe64iaxHM2adG\",\n  \"senderPublicKey\": \"CRxqEuxhdZBEHX42MU4FfyJxuHmbDBTaHMhM3Uki7pLw\",\n  \"recipient\": \"3Mx2afTZ2KbRrLNbytyzTtXukZvqEB8SkW7\",\n  \"fee\": 100000,\n  \"amount\": 5500000000,\n  \"attachment\": \"BJa6cfyGUmzBFTj3vvvaew\",\n  \"timestamp\": 1479222433704, \n  \"signature\": \"2TyN8pNS7mS9gfCbX2ktpkWVYckoAmRmDZzKH3K35DKs6sUoXHArzukV5hvveK9t79uzT3cA8CYZ9z3Utj6CnCEo\"\n}]"
       )
     ))
+=======
+>>>>>>> 3ed6509985baf3fbb9364f1e34f19a473ab95339
   def batchTransfer: Route = (path("batch-transfer") & post) {
     json[List[SignedTransferRequests]] { reqs =>
       val r = Future
@@ -169,6 +182,7 @@ case class AssetsBroadcastApiRoute(settings: RestAPISettings, utx: UtxPool, allC
     }
   }
 
+<<<<<<< HEAD
   @Path("/transfer")
   @ApiOperation(
     value = "Broadcast signed token transfer",
@@ -191,6 +205,8 @@ case class AssetsBroadcastApiRoute(settings: RestAPISettings, utx: UtxPool, allC
       new ApiResponse(code = 200, message = "Json with signed token transfer transaction"),
       new ApiResponse(code = 400, message = "Json with error description", response = classOf[ApiErrorResponse])
     ))
+=======
+>>>>>>> 3ed6509985baf3fbb9364f1e34f19a473ab95339
   def transfer: Route = (path("transfer") & post) {
     json[SignedTransferRequests] { transferReq =>
       doBroadcast(
@@ -205,28 +221,6 @@ case class AssetsBroadcastApiRoute(settings: RestAPISettings, utx: UtxPool, allC
     }
   }
 
-  @Path("/exchange")
-  @ApiOperation(
-    value = "Broadcast signed Exchange transaction",
-    notes = "Publish signed Exchange transaction to the Blockchain",
-    httpMethod = "POST",
-    consumes = "application/json",
-    produces = "application/json"
-  )
-  @ApiImplicitParams(
-    Array(
-      new ApiImplicitParam(
-        name = "body",
-        value = "Json with signed Transfer transaction",
-        required = true,
-        paramType = "body",
-        dataType = "com.wavesplatform.api.http.assets.SignedExchangeRequest"
-      )))
-  @ApiResponses(
-    Array(
-      new ApiResponse(code = 200, message = "Json with signed Exchange transfer transaction"),
-      new ApiResponse(code = 400, message = "Json with error description", response = classOf[ApiErrorResponse])
-    ))
   def exchange: Route = (path("exchange") & post) {
     json[SignedExchangeRequest] { req =>
       doBroadcast(req.toTx)

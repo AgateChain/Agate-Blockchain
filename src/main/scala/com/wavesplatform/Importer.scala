@@ -28,9 +28,18 @@ object Importer extends ScorexLogging {
     SLF4JBridgeHandler.removeHandlersForRootLogger()
     SLF4JBridgeHandler.install()
 
+<<<<<<< HEAD
     val configFilename = Try(args(0)).toOption.getOrElse("Agate-testnet.conf")
     val config         = loadConfig(ConfigFactory.parseFile(new File(configFilename)))
     val settings       = WavesSettings.fromConfig(config)
+=======
+    val configFilename     = Try(args(0)).toOption.getOrElse("waves-testnet.conf")
+    val blockchainFilename = Try(args(1))
+    val importHeight       = Try(args(2)).map(_.toInt).getOrElse(Int.MaxValue)
+
+    val config   = loadConfig(ConfigFactory.parseFile(new File(configFilename)))
+    val settings = WavesSettings.fromConfig(config)
+>>>>>>> 3ed6509985baf3fbb9364f1e34f19a473ab95339
     AddressScheme.current = new AddressScheme {
       override val chainId: Byte = settings.blockchainSettings.addressSchemeCharacter.toByte
     }
@@ -48,7 +57,7 @@ object Importer extends ScorexLogging {
       override def close(): Unit                                                                 = {}
     }
 
-    Try(args(1)) match {
+    blockchainFilename match {
       case Success(filename) =>
         log.info(s"Loading file '$filename'")
 
@@ -60,16 +69,17 @@ object Importer extends ScorexLogging {
             val checkpoint        = new CheckpointServiceImpl(db, settings.checkpointsSettings)
             val extAppender       = BlockAppender(checkpoint, blockchainUpdater, NTP, utxPoolStub, pos, settings, scheduler) _
             checkGenesis(settings, blockchainUpdater)
-            val bis          = new BufferedInputStream(inputStream)
-            var quit         = false
-            val lenBytes     = new Array[Byte](Ints.BYTES)
-            val start        = System.currentTimeMillis()
-            var counter      = 0
-            var blocksToSkip = blockchainUpdater.height - 1
+            val bis           = new BufferedInputStream(inputStream)
+            var quit          = false
+            val lenBytes      = new Array[Byte](Ints.BYTES)
+            val start         = System.currentTimeMillis()
+            var counter       = 0
+            var blocksToSkip  = blockchainUpdater.height - 1
+            val blocksToApply = importHeight - blockchainUpdater.height + 1
 
             println(s"Skipping $blocksToSkip blocks(s)")
 
-            while (!quit) {
+            while (!quit && counter < blocksToApply) {
               val s1 = bis.read(lenBytes)
               if (s1 == Ints.BYTES) {
                 val len    = Ints.fromByteArray(lenBytes)
@@ -105,7 +115,7 @@ object Importer extends ScorexLogging {
             log.info(s"Imported $counter block(s) in ${humanReadableDuration(duration)}")
           case Failure(ex) => log.error(s"Failed to open file '$filename")
         }
-      case Failure(ex) => log.error(s"Failed to get input filename from second parameter: $ex")
+      case Failure(ex) => log.error("Usage: Importer <config file> <blockchain file> [height]")
     }
   }
 

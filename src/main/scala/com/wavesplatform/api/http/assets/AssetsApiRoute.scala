@@ -4,10 +4,10 @@ import java.util.concurrent._
 
 import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import akka.http.scaladsl.server.Route
+import cats.implicits._
 import com.google.common.base.Charsets
 import com.wavesplatform.account.Address
 import com.wavesplatform.api.http._
-import cats.implicits._
 import com.wavesplatform.http.BroadcastRoute
 import com.wavesplatform.settings.RestAPISettings
 import com.wavesplatform.state.{Blockchain, ByteStr}
@@ -157,13 +157,17 @@ case class AssetsApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPoo
   @ApiOperation(value = "Information about an token", notes = "Provides detailed information about given token", httpMethod = "GET")
   @ApiImplicitParams(
     Array(
-      new ApiImplicitParam(name = "assetId", value = "ID of the asset", required = true, dataType = "string", paramType = "path")
+      new ApiImplicitParam(name = "assetId", value = "ID of the asset", required = true, dataType = "string", paramType = "path"),
+      new ApiImplicitParam(name = "full", value = "false", required = false, dataType = "boolean", paramType = "query")
     ))
   def details: Route =
     (get & path("details" / Segment)) { id =>
-      complete(assetDetails(id))
+      parameters('full.as[Boolean].?) { full =>
+        complete(assetDetails(id, full.getOrElse(false)))
+      }
     }
 
+<<<<<<< HEAD
   @Path("/transfer")
   @ApiOperation(value = "Transfer token",
                 notes = "Transfer token to new address",
@@ -180,6 +184,8 @@ case class AssetsApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPoo
         dataType = "com.wavesplatform.api.http.assets.TransferV2Request"
       )
     ))
+=======
+>>>>>>> 3ed6509985baf3fbb9364f1e34f19a473ab95339
   def transfer: Route =
     processRequest[TransferRequests](
       "transfer", { req =>
@@ -193,6 +199,7 @@ case class AssetsApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPoo
       }
     )
 
+<<<<<<< HEAD
   @Path("/masstransfer")
   @ApiOperation(value = "Mass Transfer",
                 notes = "Mass transfer of tokens",
@@ -262,27 +269,20 @@ case class AssetsApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPoo
         example = "{\"sender\":\"string\",\"assetId\":\"Base58\",\"quantity\":100,\"fee\":100000}"
       )
     ))
+=======
+  def massTransfer: Route =
+    processRequest("masstransfer", (t: MassTransferRequest) => doBroadcast(TransactionFactory.massTransferAsset(t, wallet, time)))
+
+  def issue: Route =
+    processRequest("issue", (r: IssueV1Request) => doBroadcast(TransactionFactory.issueAssetV1(r, wallet, time)))
+
+  def reissue: Route =
+    processRequest("reissue", (r: ReissueV1Request) => doBroadcast(TransactionFactory.reissueAssetV1(r, wallet, time)))
+
+>>>>>>> 3ed6509985baf3fbb9364f1e34f19a473ab95339
   def burnRoute: Route =
     processRequest("burn", (b: BurnV1Request) => doBroadcast(TransactionFactory.burnAssetV1(b, wallet, time)))
 
-  @Path("/order")
-  @ApiOperation(value = "Sign Order",
-                notes = "Create order signed by address from wallet",
-                httpMethod = "POST",
-                produces = "application/json",
-                consumes = "application/json")
-  @ApiImplicitParams(
-    Array(
-      new ApiImplicitParam(
-        name = "body",
-        value = "Order Json with data",
-        required = true,
-        paramType = "body",
-        dataType = "com.wavesplatform.transaction.assets.exchange.OrderV1",
-        defaultValue =
-          "{\n\"version\":1,\n\"id\":\"HEUQkBMZg6YZfpcruUkr8hL6nZBP7dhLZPZWD2tMn6Bz\",\n\"sender\":\"3MsNaJycGKRqVj8BUfBY8vMSP3xa7ijvhcw\",\n\"senderPublicKey\":\"42vzsPLYVZ6dZn4RbF5qUVNzKos6XFyYJse5UqX8shP7\",\n\"matcherPublicKey\":\"3pLCKEsdiuhv3qFFNk8QjudhWyNxKRJ4isnnDe5ANEpp\",\n\"assetPair\":{\n\"amountAsset\":null,\n\"priceAsset\":\"DA5T1QAypqkhe3n6ECSt12P3L9wxTBWp6SUzBB8vLixX\"\n},\n\"orderType\":\"buy\",\n\"price\":28841388924312,\n\"amount\":26871634763588,\n\"timestamp\":5639882736428729894,\n\"expiration\":1538944198284,\n  \"matcherFee\" : 16351880967675,\n\"signature\":\"3R2GhvQr6pSkXUKhfg95rZf6s4noMWrcnQjSxBeAY5Yu9UrfE93Y6mM8szUtwMeREFmT6g9mq7FDD27hyeiDukWm\",\n\"proofs\":[\"3R2GhvQr6pSkXUKhfg95rZf6s4noMWrcnQjSxBeAY5Yu9UrfE93Y6mM8szUtwMeREFmT6g9mq7FDD27hyeiDukWm\"]\n}"
-      )
-    ))
   def signOrder: Route =
     processRequest("order", (order: Order) => {
       wallet.privateKeyAccount(order.senderPublicKey).map(pk => Order.sign(order, pk))
@@ -334,7 +334,7 @@ case class AssetsApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPoo
       )
     }).left.map(ApiError.fromValidationError)
 
-  private def assetDetails(assetId: String): Either[ApiError, JsObject] =
+  private def assetDetails(assetId: String, full: Boolean): Either[ApiError, JsObject] =
     (for {
       id <- ByteStr.decodeBase58(assetId).toOption.toRight("Incorrect asset ID")
       tt <- blockchain.transactionInfo(id).toRight("Failed to find issue transaction by ID")
@@ -348,8 +348,13 @@ case class AssetsApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPoo
       complexity  <- description.script.fold[Either[String, Long]](Right(0))(ScriptCompiler.estimate)
 =======
       description <- blockchain.assetDescription(id).toRight("Failed to get description of the asset")
+<<<<<<< HEAD
       complexity  <- description.script.fold[Either[String, Long]](Right(0))(script => ScriptCompiler.estimate(script, script.version))
 >>>>>>> 1a6b3243dad151498c2106ff6f09c27303a5800f
+=======
+      script = description.script.filter(_ => full)
+      complexity <- script.fold[Either[String, Long]](Right(0))(script => ScriptCompiler.estimate(script, script.version))
+>>>>>>> 3ed6509985baf3fbb9364f1e34f19a473ab95339
     } yield {
       JsObject(
         Seq(
@@ -362,14 +367,22 @@ case class AssetsApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPoo
           "decimals"       -> JsNumber(tx.decimals.toInt),
           "reissuable"     -> JsBoolean(description.reissuable),
           "quantity"       -> JsNumber(BigDecimal(description.totalVolume)),
+          "scripted"       -> JsBoolean(description.script.nonEmpty),
           "minSponsoredAssetFee" -> (description.sponsorship match {
             case 0           => JsNull
             case sponsorship => JsNumber(sponsorship)
           })
-        )
+        ) ++ (script.toSeq.map { script =>
+          "scriptDetails" -> Json.obj(
+            "scriptComplexity" -> JsNumber(BigDecimal(complexity)),
+            "script"           -> JsString(script.bytes().base64),
+            "scriptText"       -> JsString(script.text)
+          )
+        })
       )
     }).left.map(m => CustomValidationError(m))
 
+<<<<<<< HEAD
   @Path("/sponsor")
   @ApiOperation(value = "Sponsor an token", httpMethod = "POST", produces = "application/json", consumes = "application/json")
   @ApiImplicitParams(
@@ -383,6 +396,8 @@ case class AssetsApiRoute(settings: RestAPISettings, wallet: Wallet, utx: UtxPoo
         defaultValue = "{\"sender\":\"string\",\"assetId\":\"Base58\",\"minSponsoredAssetFee\":100000000,\"fee\":100000000}"
       )
     ))
+=======
+>>>>>>> 3ed6509985baf3fbb9364f1e34f19a473ab95339
   def sponsorRoute: Route =
     processRequest("sponsor", (req: SponsorFeeRequest) => doBroadcast(TransactionFactory.sponsor(req, wallet, time)))
 }
